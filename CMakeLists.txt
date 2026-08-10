@@ -6,11 +6,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXTENSIONS OFF)
 
 find_package(Vulkan REQUIRED)
+find_package(Ktx CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(glimpse
-    src/main.cpp
+add_executable(${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(glimpse PRIVATE Vulkan::Vulkan)
+add_subdirectory(src)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    Vulkan::Vulkan
+    glfw
+    glm::glm
+    ktx
+)
