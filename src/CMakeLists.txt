@@ -3,3 +3,4 @@ target_sources(${PROJECT_NAME} PRIVATE
 )
 
 add_subdirectory(window)
+add_subdirectory(renderer)

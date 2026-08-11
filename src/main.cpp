@@ -3,12 +3,20 @@
 #include <GLFW/glfw3.h>
 
 int main() {
-    glfwInit();
     auto window_result = glimpse::Window::new_window(800, 600, "Glimpse of ..."); 
     if (!window_result) {
         std::println("{}", window_result.error());
+        return -1;
     }
     glimpse::Window &window = *window_result;
-    glfwTerminate();
-    return 0;
+    GLFWwindow *window_ptr = window.get_window();
+
+    glfwShowWindow(window_ptr);
+
+    while (!glfwWindowShouldClose(window_ptr)) {
+        if (glfwGetKey(window_ptr, GLFW_KEY_Q)) {
+            glfwSetWindowShouldClose(window_ptr, true);
+        }
+        glfwPollEvents();
+    }
 }
