@@ -14,8 +14,8 @@ namespace glimpse {
 
         ~Window(); 
 
-        Window(Window&& other) noexcept = default;
-        Window& operator=(Window&& other) noexcept = default; 
+        Window(Window&& other) noexcept;
+        Window& operator=(Window&& other) noexcept; 
 
         Window(const Window&) = delete;
         Window& operator=(const Window&) = delete;
@@ -24,6 +24,6 @@ namespace glimpse {
     private: 
         static inline size_t m_ref_count = 0; 
         Window(std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window);
-        std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> m_window;
+        std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> m_window{nullptr, glfwDestroyWindow};
     };
 }

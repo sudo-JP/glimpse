@@ -8,15 +8,18 @@ int main() {
         std::println("{}", window_result.error());
         return -1;
     }
+    
     glimpse::Window &window = *window_result;
     GLFWwindow *window_ptr = window.get_window();
 
+    glfwMakeContextCurrent(window_ptr);
     glfwShowWindow(window_ptr);
 
     while (!glfwWindowShouldClose(window_ptr)) {
         if (glfwGetKey(window_ptr, GLFW_KEY_Q)) {
             glfwSetWindowShouldClose(window_ptr, true);
         }
+
         glfwPollEvents();
     }
 }

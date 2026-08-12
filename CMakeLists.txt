@@ -25,4 +25,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm::glm
     KTX::ktx
+    OpenGL::GL
 )

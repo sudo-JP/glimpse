@@ -32,11 +32,30 @@ namespace glimpse {
     }
 
     Window::~Window() {
-        m_ref_count--; 
-        m_window.reset();
-
-        if (m_ref_count == 0) {
-            glfwTerminate();
+        if (m_window) {
+            m_ref_count--; 
+            m_window.reset();
+            if (m_ref_count == 0) {
+                glfwTerminate();
+            }
         }
     }
+
+    Window::Window(Window&& other) noexcept
+    : m_window(std::move(other.m_window)) {}
+
+    Window& Window::operator=(Window&& other) noexcept {
+        if (this != &other) {
+            if (m_window) {
+                m_ref_count--;
+                m_window.reset();
+                if (m_ref_count == 0) {
+                    glfwTerminate();
+                }
+            }
+            m_window = std::move(other.m_window);
+        }
+        return *this;
+    }
+
 }
