@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <expected>
 #include <memory>
+#include <string>
 
 namespace glimpse {
     class Window {

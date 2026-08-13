@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -21,10 +22,15 @@ namespace glimpse {
          * */
         class VulkanContext {
         public:
-            VulkanContext(const ContextAppInfo& app_context, const ContextAppInfo &engine_context);
+            static std::expected<VulkanContext, std::string> new_vk_context(
+                const ContextAppInfo& app_context, const ContextAppInfo &engine_context
+            );
         private:
+            VulkanContext(const ContextAppInfo& app_context, const ContextAppInfo &engine_context);
             vk::raii::Context m_context;
             vk::raii::Instance m_instance = nullptr;
+            vk::raii::PhysicalDevice physical_device; 
+            vk::raii::Device device; 
         };
     }
 }
