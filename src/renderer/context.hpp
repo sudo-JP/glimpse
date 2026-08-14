@@ -26,11 +26,16 @@ namespace glimpse {
                 const ContextAppInfo& app_context, const ContextAppInfo &engine_context
             );
         private:
-            VulkanContext(const ContextAppInfo& app_context, const ContextAppInfo &engine_context);
+            VulkanContext(
+                vk::raii::Context context, 
+                vk::raii::Instance instance, 
+                vk::raii::PhysicalDevice physical_device, 
+                vk::raii::Device device 
+            );
             vk::raii::Context m_context;
             vk::raii::Instance m_instance = nullptr;
-            vk::raii::PhysicalDevice physical_device; 
-            vk::raii::Device device; 
+            vk::raii::PhysicalDevice m_physical_device; 
+            vk::raii::Device m_device; 
         };
     }
 }

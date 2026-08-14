@@ -6,6 +6,8 @@
 #include <vulkan/vulkan_core.h>
 
 namespace glimpse::renderer {
+    namespace {
+    }
 
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
         const ContextAppInfo& app_context, const ContextAppInfo &engine_context
@@ -21,39 +23,57 @@ namespace glimpse::renderer {
             vk::ApiVersion14
         };
 
-        vk::raii::Context context;
+        try {
+            vk::raii::Context context;
 
-        uint32_t glfw_extension_count = 0; 
-        auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-        
-        auto extension_properties = context.enumerateInstanceExtensionProperties();
+            uint32_t glfw_extension_count = 0; 
+            auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+            
+            auto extension_properties = context.enumerateInstanceExtensionProperties();
 
-        for (auto i = 0; i < glfw_extension_count; i++) {
-            auto check_glfw = [glfw_extension = glfw_extensions[i]](auto const& extension_property) {
-                std::string_view extension_name = extension_property.extensionName;
-                return extension_name.compare(glfw_extension) == 0;
-            };
-            if (std::ranges::none_of(extension_properties, check_glfw)) {
-                return std::unexpected(
-                    "required GLFW extension not supported: " 
-                    + std::string(glfw_extensions[i])
-                ); 
+            for (auto i = 0; i < glfw_extension_count; i++) {
+                auto check_glfw = [glfw_extension = glfw_extensions[i]](auto const& extension_property) {
+                    std::string_view extension_name = extension_property.extensionName;
+                    return extension_name.compare(glfw_extension) == 0;
+                };
+                if (std::ranges::none_of(extension_properties, check_glfw)) {
+                    return std::unexpected(
+                        "required GLFW extension not supported: " 
+                        + std::string(glfw_extensions[i])
+                    ); 
+                }
             }
-        }
 
-        vk::InstanceCreateInfo create_info{
-            {},
-            &app_info,
-            glfw_extension_count,
-            glfw_extensions,
-        };
-        vk::raii::Instance instance(context, create_info);
-        vk::raii::PhysicalDevice phys_device = instance.enumeratePhysicalDevices().front();
-        vk::raii::Device device(phys_device, vk::DeviceCreateInfo{});
-        return VulkanContext(app_context, engine_context);    
-    }
-    VulkanContext::VulkanContext(const ContextAppInfo& app_context, const ContextAppInfo &engine_context) {
+            vk::InstanceCreateInfo create_info{
+                {},
+                &app_info,
+                glfw_extension_count,
+                glfw_extensions,
+            };
+            vk::raii::Instance instance(context, create_info);
+            vk::raii::PhysicalDevice phys_device = instance.enumeratePhysicalDevices().front();
+            vk::raii::Device device(phys_device, vk::DeviceCreateInfo{});
 
-        //m_instance = vk::raii::Instance(m_context, create_info);
+            return VulkanContext(
+                std::move(context), 
+                std::move(instance), 
+                std::move(phys_device), 
+                std::move(device)
+            );    
+        } catch (const vk::SystemError& err) {
+            return std::unexpected(err.what());
+        } 
+        return std::unexpected("failed to initialize vulkan context");
     }
+
+    VulkanContext::VulkanContext(
+        vk::raii::Context context, 
+        vk::raii::Instance instance, 
+        vk::raii::PhysicalDevice physical_device, 
+        vk::raii::Device device 
+    ) : m_context(std::move(context)),
+    m_instance(std::move(instance)),
+    m_physical_device(std::move(physical_device)),
+    m_device(std::move(device))
+    {}
 }
