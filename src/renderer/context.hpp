@@ -23,7 +23,9 @@ namespace glimpse {
         class VulkanContext {
         public:
             static std::expected<VulkanContext, std::string> new_vk_context(
-                const ContextAppInfo& app_context, const ContextAppInfo &engine_context
+                const ContextAppInfo& app_context, 
+                const ContextAppInfo &engine_context,
+                const bool debug_mode
             );
         private:
             VulkanContext(

@@ -1,16 +1,50 @@
 #include "context.hpp"
 #include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <expected>
 #include <string_view>
 #include <vulkan/vulkan_core.h>
 
 namespace glimpse::renderer {
     namespace {
+        std::expected<void, std::string> validation_layers(
+            const vk::raii::Context& context
+        ) {
+
+            // validation layers
+            const std::vector<char const*> validation_layers = {
+                "VK_LAYER_KHRONOS_validation"
+            };
+            std::vector<char const*> required_layers; 
+            required_layers.assign(validation_layers.begin(), validation_layers.end());
+
+            auto layer_properties = context.enumerateInstanceLayerProperties();
+            auto unsupported_layer_it = std::ranges::find_if(
+                required_layers,
+                [&layer_properties](auto const &required_layer) {
+                    return std::ranges::none_of(layer_properties,
+                        [required_layer](auto const& layer_property)  {
+                        std::string_view layer_name = layer_property.layerName;
+                        return layer_name.compare(required_layer) == 0;
+                });
+            });
+
+            if (unsupported_layer_it != required_layers.end()) {
+                return std::unexpected("required layer not supported: " + std::string(*unsupported_layer_it));
+            }
+
+            // GLFW extensions validation 
+            //auto required_extensions = getR
+
+            return {};
+        }
     }
 
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
-        const ContextAppInfo& app_context, const ContextAppInfo &engine_context
+        const ContextAppInfo& app_context, 
+        const ContextAppInfo &engine_context,
+        const bool debug_mode
     ) {
         const char *app_name_c = app_context.name.c_str();
         const char *engine_name_c = engine_context.name.c_str();
@@ -25,6 +59,14 @@ namespace glimpse::renderer {
 
         try {
             vk::raii::Context context;
+
+            if (debug_mode) {
+                auto validation_result = validation_layers(context);
+                if (!validation_result) {
+                    return std::unexpected(validation_result.error());
+                }
+            }
+
 
             uint32_t glfw_extension_count = 0; 
             auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
