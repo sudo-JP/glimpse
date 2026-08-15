@@ -32,12 +32,14 @@ namespace glimpse {
                 vk::raii::Context context, 
                 vk::raii::Instance instance, 
                 vk::raii::PhysicalDevice physical_device, 
-                vk::raii::Device device 
+                vk::raii::Device device,
+                std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger
             );
             vk::raii::Context m_context;
             vk::raii::Instance m_instance = nullptr;
             vk::raii::PhysicalDevice m_physical_device; 
             vk::raii::Device m_device; 
+            std::optional<vk::raii::DebugUtilsMessengerEXT> m_debug_messenger;
         };
     }
 }
