@@ -1,9 +1,8 @@
 #include "context.hpp"
-#include "vulkan/vulkan.hpp"
+#include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <expected>
-#include <iostream>
 #include <print>
 #include <string_view>
 #include <vulkan/vulkan_core.h>
@@ -11,6 +10,7 @@
 
 namespace glimpse::renderer {
     namespace {
+        // Validation layers
         std::expected<std::vector<const char*>, std::string> required_layers(const vk::raii::Context& context) {
 
             // validation layers
@@ -38,6 +38,7 @@ namespace glimpse::renderer {
             return required_layers;
         }
 
+        // Extension layers
         std::expected<std::vector<const char*>, std::string> required_extensions(
                 const vk::raii::Context& context, const bool debug) {
             uint32_t glfw_extension_count = 0; 
@@ -64,6 +65,7 @@ namespace glimpse::renderer {
             return std::vector<const char*>(glfw_extensions, glfw_extensions + glfw_extension_count);
         }
 
+        // Debug call
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(
             vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
             vk::DebugUtilsMessageTypeFlagsEXT type,
@@ -77,6 +79,7 @@ namespace glimpse::renderer {
             return vk::False;
         }
 
+        // Debug messenger
         vk::raii::DebugUtilsMessengerEXT setup_debug_messenger(
             const vk::raii::Instance& instance
         ) {
@@ -99,6 +102,70 @@ namespace glimpse::renderer {
 
             return instance.createDebugUtilsMessengerEXT(debug_utils_messenger_create_info_ext);
         }
+
+        // Helper for picking out physical device
+        // wtf...
+        bool is_device_suitable(const vk::raii::PhysicalDevice& physical_device) {
+            auto device_properties = physical_device.getProperties();
+            auto device_features = physical_device.getFeatures();
+
+            // Support 1.3 api
+            bool supports_vulkan1_3 = device_properties.apiVersion >= vk::ApiVersion13;
+
+            // Queue family support graphics operations
+            auto queue_families = physical_device.getQueueFamilyProperties();
+            bool support_graphics = std::ranges::any_of(
+                queue_families, [](auto const &qfq) { return !!(qfq.queueFlags & vk::QueueFlagBits::eGraphics); }
+            );
+            std::vector<const char*> required_device_extension = {vk::KHRSwapchainExtensionName};
+
+            auto available_device_extensions = physical_device.enumerateDeviceExtensionProperties();
+            bool supports_all_required_extensions = 
+                std::ranges::all_of(required_device_extension,
+                    [&available_device_extensions](auto const& required_device_extension) {
+                    return std::ranges::any_of(available_device_extensions,
+                        [required_device_extension](auto const& available_device_extension) {
+                            std::string_view extension_name = available_device_extension.extensionName;
+                            return extension_name.compare(required_device_extension) == 0; 
+                        }
+                    );
+                }
+            );
+
+            auto features = physical_device.template getFeatures2<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan13Features,
+                vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+
+            bool supports_required_features = 
+                features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters
+                && features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
+                && features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
+
+            if (device_properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu
+                && device_features.geometryShader) return true; 
+
+            return supports_vulkan1_3 
+            && support_graphics
+            && supports_all_required_extensions
+            && supports_required_features;
+        }
+
+        // Pick out physical device
+        std::expected<vk::raii::PhysicalDevice, std::string> pick_physical_device(
+            const vk::raii::Instance& instance
+        ) {
+            auto physical_devices = instance.enumeratePhysicalDevices();
+            if (physical_devices.empty()) {
+                return std::unexpected("failed to find GPUs with vulkan support");
+            }
+            for (const auto& pd: physical_devices) {
+                if (is_device_suitable(pd)) return std::move(pd);
+            }
+            return std::unexpected("failed to find a suitable discrete GPU");
+        }
+
     }
 
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
@@ -149,7 +216,16 @@ namespace glimpse::renderer {
             };
 
             vk::raii::Instance instance(context, create_info);
-            vk::raii::PhysicalDevice phys_device = instance.enumeratePhysicalDevices().front();
+
+            auto physical_device_result = pick_physical_device(instance);
+            vk::raii::PhysicalDevice phys_device = nullptr;
+            if (physical_device_result) {
+                phys_device = std::move(*physical_device_result);
+                std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
+            } else {
+                return std::unexpected(physical_device_result.error());
+            }
+
             vk::raii::Device device(phys_device, vk::DeviceCreateInfo{});
             std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger = std::nullopt; 
 
