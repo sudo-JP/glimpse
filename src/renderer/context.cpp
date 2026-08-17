@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include <vector>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -62,7 +63,7 @@ namespace glimpse::renderer {
                     ); 
                 }
             }
-            return std::vector<const char*>(glfw_extensions, glfw_extensions + glfw_extension_count);
+            return extensions;
         }
 
         // Debug call
@@ -166,6 +167,52 @@ namespace glimpse::renderer {
             return std::unexpected("failed to find a suitable discrete GPU");
         }
 
+        std::expected<vk::raii::Device, std::string> create_logical_device(
+            const vk::raii::PhysicalDevice& physical_device
+        ) {
+            // Queue stuff
+            std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
+
+            auto graphics_queue_family_property = std::ranges::find_if(
+                queue_family_properties, [](auto const &qfp) {
+                    return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+                }
+            );
+
+            auto graphics_idx = static_cast<uint32_t>(std::distance(
+                queue_family_properties.begin(), graphics_queue_family_property
+            ));
+
+            float queue_priority = 1.0f;
+            int queue_count = 1; 
+            vk::DeviceQueueCreateInfo device_queue_create_info(
+                vk::DeviceQueueCreateFlags(),
+                graphics_idx,
+                queue_count,
+                &queue_priority
+            );
+
+            vk::PhysicalDeviceFeatures device_features; 
+
+            vk::StructureChain<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan13Features,
+                vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+            > feature_chain = {
+                // vk::PhysicalDeviceFeatures2
+                {}, 
+                // Enable shader draw params from 1.1
+                {true},
+                // Enable dynamic rendering from vk 1.3
+                {true},
+                // Enable extended dyanmic state from extension
+                {true},
+            };
+            std::vector<const char*> required_device_extension = {
+                vk::KHRSwapchainExtensionName
+            };
+        }
     }
 
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
