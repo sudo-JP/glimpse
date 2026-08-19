@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -167,9 +168,9 @@ namespace glimpse::renderer {
             return std::unexpected("failed to find a suitable discrete GPU");
         }
 
-        std::expected<vk::raii::Device, std::string> create_logical_device(
-            const vk::raii::PhysicalDevice& physical_device
-        ) {
+        std::expected<std::pair<vk::raii::Device, vk::raii::Queue>, std::string> 
+            create_logical_device(const vk::raii::PhysicalDevice& physical_device) 
+        {
             // Queue stuff
             std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
 
@@ -212,6 +213,19 @@ namespace glimpse::renderer {
             std::vector<const char*> required_device_extension = {
                 vk::KHRSwapchainExtensionName
             };
+
+            int queue_create_info_count = 1; 
+            vk::DeviceCreateInfo device_create_info = vk::DeviceCreateInfo()
+                .setPNext(&feature_chain.get<vk::PhysicalDeviceFeatures2>())
+                .setQueueCreateInfoCount(queue_create_info_count)
+                .setPQueueCreateInfos(&device_queue_create_info)
+                .setEnabledExtensionCount(static_cast<uint32_t>(required_device_extension.size()))
+                .setPpEnabledExtensionNames(required_device_extension.data());
+
+            
+            vk::raii::Device device(physical_device, device_create_info);
+            vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_idx, 0);
+            return std::pair{std::move(device), std::move(graphics_queue)};
         }
     }
 
@@ -238,19 +252,15 @@ namespace glimpse::renderer {
             std::vector<const char*> glfw_extensions; 
 
             auto extension_result = required_extensions(context, debug_mode);
-            if (extension_result) {
-                glfw_extensions = std::move(*extension_result);
-            } else {
-                return std::unexpected(extension_result.error());
-            }
+            if (!extension_result) return std::unexpected(extension_result.error());
+
+            glfw_extensions = std::move(extension_result).value();
+
             if (debug_mode) {
                 auto validation_result = required_layers(context);
-                if (validation_result) {
-                    layers = std::move(*validation_result);
-                } else {
-                    return std::unexpected(validation_result.error());
-                }
-
+                if (!validation_result) return std::unexpected(validation_result.error());
+                
+                layers = std::move(validation_result).value();
             }
 
             vk::InstanceCreateInfo create_info{
@@ -263,17 +273,28 @@ namespace glimpse::renderer {
             };
 
             vk::raii::Instance instance(context, create_info);
+            ContextInstance context_instance {
+                std::move(context), 
+                std::move(instance)
+            };
 
             auto physical_device_result = pick_physical_device(instance);
             vk::raii::PhysicalDevice phys_device = nullptr;
-            if (physical_device_result) {
-                phys_device = std::move(*physical_device_result);
-                std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
-            } else {
-                return std::unexpected(physical_device_result.error());
-            }
+            if (!physical_device_result) return std::unexpected(physical_device_result.error());
 
-            vk::raii::Device device(phys_device, vk::DeviceCreateInfo{});
+            phys_device = std::move(physical_device_result).value();
+            std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
+
+            auto device_result = create_logical_device(phys_device);
+            if (!device_result) return std::unexpected(device_result.error());
+
+            auto [device, graphics_queue] = std::move(device_result).value();
+            DeviceResources device_resources {
+                std::move(device),
+                std::move(graphics_queue),
+                std::move(phys_device), 
+            };
+
             std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger = std::nullopt; 
 
             if (debug_mode) {
@@ -281,10 +302,8 @@ namespace glimpse::renderer {
             }
 
             return VulkanContext(
-                std::move(context), 
-                std::move(instance), 
-                std::move(phys_device), 
-                std::move(device),
+                std::move(context_instance),
+                std::move(device_resources),
                 std::move(debug_messenger)
             );    
         } catch (const vk::SystemError& err) {
@@ -294,15 +313,15 @@ namespace glimpse::renderer {
     }
 
     VulkanContext::VulkanContext(
-        vk::raii::Context context, 
-        vk::raii::Instance instance, 
-        vk::raii::PhysicalDevice physical_device, 
-        vk::raii::Device device,
-        std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger
-    ) : m_context(std::move(context)),
-    m_instance(std::move(instance)),
-    m_physical_device(std::move(physical_device)),
-    m_device(std::move(device)),
+        ContextInstance context_instance, 
+        DeviceResources device_resources, 
+        std::optional<vk::raii::DebugUtilsMessengerEXT>debug_messenger) 
+    // The actual init
+    : m_context(std::move(context_instance.context)),
+    m_instance(std::move(context_instance.instance)),
+    m_physical_device(std::move(device_resources.physical_device)),
+    m_device(std::move(device_resources.device)),
+    m_graphics_queue(std::move(device_resources.graphics_queue)),
     m_debug_messenger(std::move(debug_messenger))
     {}
 }
