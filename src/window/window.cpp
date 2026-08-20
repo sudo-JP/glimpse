@@ -27,7 +27,7 @@ namespace glimpse {
         m_ref_count++;
     }
 
-    GLFWwindow *Window::get_window() {
+    GLFWwindow *Window::get_window() const {
         return m_window.get();
     }
 

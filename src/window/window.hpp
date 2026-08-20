@@ -21,7 +21,7 @@ namespace glimpse {
         Window(const Window&) = delete;
         Window& operator=(const Window&) = delete;
 
-        GLFWwindow *get_window(); 
+        GLFWwindow *get_window() const; 
     private: 
         static inline size_t m_ref_count = 0; 
         Window(std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window);

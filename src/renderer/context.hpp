@@ -1,7 +1,9 @@
 #pragma once
+#include "window/window.hpp"
 #include <expected>
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
+#include <GLFW/glfw3.h>
 
 namespace glimpse {
     struct Version {
@@ -25,6 +27,7 @@ namespace glimpse {
             static std::expected<VulkanContext, std::string> new_vk_context(
                 const ContextAppInfo& app_context, 
                 const ContextAppInfo &engine_context,
+                const Window& window, 
                 const bool debug_mode
             );
         private:
@@ -54,6 +57,7 @@ namespace glimpse {
             vk::raii::Device m_device; 
             vk::raii::Queue m_graphics_queue = nullptr; 
             std::optional<vk::raii::DebugUtilsMessengerEXT> m_debug_messenger;
+            vk::raii::SurfaceKHR surface = nullptr;
         };
     }
 }

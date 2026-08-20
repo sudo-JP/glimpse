@@ -1,12 +1,18 @@
+// Misc
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #include "context.hpp"
+
+// std
 #include <utility>
 #include <vector>
-#include <vulkan/vulkan.hpp>
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <expected>
 #include <print>
 #include <string_view>
+
+// Vukan
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_to_string.hpp>
 
@@ -169,26 +175,33 @@ namespace glimpse::renderer {
         }
 
         std::expected<std::pair<vk::raii::Device, vk::raii::Queue>, std::string> 
-            create_logical_device(const vk::raii::PhysicalDevice& physical_device) 
-        {
+            create_logical_device(
+            const vk::raii::PhysicalDevice& physical_device,
+            const vk::SurfaceKHR& surface
+        ) {
             // Queue stuff
             std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
 
-            auto graphics_queue_family_property = std::ranges::find_if(
-                queue_family_properties, [](auto const &qfp) {
-                    return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-                }
-            );
+            std::optional<uint32_t> queue_idx;
 
-            auto graphics_idx = static_cast<uint32_t>(std::distance(
-                queue_family_properties.begin(), graphics_queue_family_property
-            ));
+            for (uint32_t qfq_idx = 0; qfq_idx < queue_family_properties.size(); qfq_idx++) {
+                auto queue_flag = queue_family_properties[qfq_idx].queueFlags;
+                if ((queue_flag & vk::QueueFlagBits::eGraphics)
+                && physical_device.getSurfaceSupportKHR(qfq_idx, surface)) {
+                    queue_idx= qfq_idx;
+                    break;
+                }
+
+            }
+
+            if (!queue_idx.has_value()) return std::unexpected("could not find queue for graphics and present");
+            auto graphics_queue_idx = queue_idx.value();
 
             float queue_priority = 1.0f;
             int queue_count = 1; 
             vk::DeviceQueueCreateInfo device_queue_create_info(
                 vk::DeviceQueueCreateFlags(),
-                graphics_idx,
+                graphics_queue_idx,
                 queue_count,
                 &queue_priority
             );
@@ -224,7 +237,7 @@ namespace glimpse::renderer {
 
             
             vk::raii::Device device(physical_device, device_create_info);
-            vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_idx, 0);
+            vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_queue_idx, 0);
             return std::pair{std::move(device), std::move(graphics_queue)};
         }
     }
@@ -232,6 +245,7 @@ namespace glimpse::renderer {
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
         const ContextAppInfo& app_context, 
         const ContextAppInfo &engine_context,
+        const Window& window, 
         const bool debug_mode
     ) {
         const char *app_name_c = app_context.name.c_str();
@@ -273,6 +287,15 @@ namespace glimpse::renderer {
             };
 
             vk::raii::Instance instance(context, create_info);
+
+            // Surface setup
+            vk::raii::SurfaceKHR surface = nullptr; 
+            VkSurfaceKHR _surface; 
+            if (glfwCreateWindowSurface(*instance, window.get_window(), nullptr, &_surface) != 0) {
+                return std::unexpected("failed to create window surface");
+            }
+            surface = vk::raii::SurfaceKHR(instance, _surface);
+
             ContextInstance context_instance {
                 std::move(context), 
                 std::move(instance)
@@ -285,7 +308,7 @@ namespace glimpse::renderer {
             phys_device = std::move(physical_device_result).value();
             std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
 
-            auto device_result = create_logical_device(phys_device);
+            auto device_result = create_logical_device(phys_device, surface);
             if (!device_result) return std::unexpected(device_result.error());
 
             auto [device, graphics_queue] = std::move(device_result).value();

@@ -4,14 +4,14 @@
 #include <GLFW/glfw3.h>
 
 int main() {
-    /*auto window_result = glimpse::Window::new_window(800, 600, "Glimpse of ..."); 
+    auto window_result = glimpse::Window::new_window(800, 600, "Glimpse of ..."); 
     if (!window_result) {
         std::println("{}", window_result.error());
         return -1;
     }
     
-    glimpse::Window &window = *window_result;
-    GLFWwindow *window_ptr = window.get_window();*/
+    const auto window = std::move(window_result).value();
+    const GLFWwindow *window_ptr = window.get_window();
 
     glimpse::Version version {
         1, 0, 0
@@ -25,7 +25,7 @@ int main() {
     };
 
     auto vk_ctx_res = glimpse::renderer::VulkanContext::new_vk_context(
-        app_info, engine_ctx, true
+        app_info, engine_ctx, window, true
     );
     if (!vk_ctx_res) {
         std::println(stderr, "{}", vk_ctx_res.error());
