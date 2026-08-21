@@ -30,6 +30,10 @@ namespace glimpse {
                 const Window& window, 
                 const bool debug_mode
             );
+            
+            const vk::raii::PhysicalDevice& get_physical_device() const;
+            const vk::raii::SurfaceKHR& get_surface() const;
+
         private:
             struct DeviceResources {
                 vk::raii::Device device;
@@ -40,6 +44,7 @@ namespace glimpse {
             struct ContextInstance {
                 vk::raii::Context context; 
                 vk::raii::Instance instance;
+                vk::raii::SurfaceKHR surface; 
             };
 
             struct VKDebug {
@@ -57,7 +62,7 @@ namespace glimpse {
             vk::raii::Device m_device; 
             vk::raii::Queue m_graphics_queue = nullptr; 
             std::optional<vk::raii::DebugUtilsMessengerEXT> m_debug_messenger;
-            vk::raii::SurfaceKHR surface = nullptr;
+            vk::raii::SurfaceKHR m_surface = nullptr;
         };
     }
 }

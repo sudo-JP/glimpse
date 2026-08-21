@@ -298,7 +298,8 @@ namespace glimpse::renderer {
 
             ContextInstance context_instance {
                 std::move(context), 
-                std::move(instance)
+                std::move(instance),
+                std::move(surface)
             };
 
             auto physical_device_result = pick_physical_device(instance);
@@ -345,6 +346,15 @@ namespace glimpse::renderer {
     m_physical_device(std::move(device_resources.physical_device)),
     m_device(std::move(device_resources.device)),
     m_graphics_queue(std::move(device_resources.graphics_queue)),
-    m_debug_messenger(std::move(debug_messenger))
+    m_debug_messenger(std::move(debug_messenger)),
+    m_surface(std::move(context_instance.surface))
     {}
+
+    const vk::raii::PhysicalDevice& VulkanContext::get_physical_device() const {
+        return m_physical_device;
+    }
+
+    const vk::raii::SurfaceKHR& VulkanContext::get_surface() const {
+        return m_surface;
+    }
 }
