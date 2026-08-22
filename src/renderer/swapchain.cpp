@@ -2,6 +2,7 @@
 #include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <cstdint>
 #include <expected>
 #include <limits>
 #include <string>
@@ -63,6 +64,15 @@ namespace glimpse::swapchain {
                 std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
             };
         }
+
+        uint32_t choose_swap_min_image_count(const vk::SurfaceCapabilitiesKHR& capabilities) {
+            auto min_image_count = std::max(3u, capabilities.minImageCount);
+            if ((0 < capabilities.maxImageCount) && (capabilities.maxImageCount < min_image_count)) 
+            {
+                min_image_count = capabilities.maxImageCount;
+            }
+            return min_image_count;
+        }
     }
 
     std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
@@ -72,14 +82,50 @@ namespace glimpse::swapchain {
         auto physical_device = context.get_physical_device();
         const auto& surface = context.get_surface();
 
-        std::vector<vk::SurfaceFormatKHR> available_formats = physical_device.getSurfaceFormatsKHR(*surface);
+        // Get from physical device
+        auto available_formats = physical_device.getSurfaceFormatsKHR(*surface);
         auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-        std::vector<vk::PresentModeKHR> available_presentation_modes = physical_device.getSurfacePresentModesKHR(*surface);
+        auto available_presentation_modes = physical_device.getSurfacePresentModesKHR(*surface);
+
+        // Choosing
+        auto swapchain_extent = choose_swap_extent(surface_capabilities, window);
+        auto min_image_count = choose_swap_min_image_count(surface_capabilities);
+
+        // Err handlings 
+        auto swapchain_surface_format_res = choose_swap_surface_format(available_formats);
+        if (!swapchain_surface_format_res) return std::unexpected(swapchain_surface_format_res.error());
+        auto swapchain_surface_format = std::move(swapchain_surface_format_res).value();
+
+        auto swapchain_present_mode_res = choose_swap_presentation_mode(available_presentation_modes);
+        if (!swapchain_present_mode_res) return std::unexpected(swapchain_present_mode_res.error());
+        auto swapchain_present_mode = std::move(swapchain_present_mode_res).value();
+
+        vk::SwapchainCreateInfoKHR swapchain_create_info = vk::SwapchainCreateInfoKHR()
+            .setSurface(*surface)
+            .setMinImageCount(min_image_count)
+            .setImageFormat(swapchain_surface_format.format)
+            .setImageColorSpace(swapchain_surface_format.colorSpace)
+            .setImageExtent(swapchain_extent)
+            .setImageArrayLayers(1)
+            .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+            .setImageSharingMode(vk::SharingMode::eExclusive)
+            .setPreTransform(surface_capabilities.currentTransform)
+            .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+            .setPresentMode(swapchain_present_mode)
+            .setClipped(true);
+
         return std::unexpected("uh");
     }
 
 
-    VulkanSwapchain::VulkanSwapchain() {
-        
-    }
+    VulkanSwapchain::VulkanSwapchain(
+        vk::raii::SwapchainKHR swapchain,
+        std::vector<vk::Image> swapchain_images,
+        vk::SurfaceFormatKHR swapchain_surface_format,
+        vk::Extent2D swapchain_extent
+    ) : m_swapchain(std::move(swapchain)), 
+    m_swapchain_images(std::move(swapchain_images)),
+    m_swapchain_surface_format(std::move(swapchain_surface_format)),
+    m_swapchain_extent(std::move(swapchain_extent)) 
+    {}
 }

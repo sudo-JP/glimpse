@@ -1,6 +1,7 @@
 #pragma once
 #include "renderer/context.hpp"
 #include <expected>
+#include <vector>
 #include <vulkan/vulkan_raii.hpp>
 #include "window/window.hpp"
 
@@ -14,7 +15,16 @@ namespace glimpse {
             );
             
         private: 
-            VulkanSwapchain();
+            VulkanSwapchain(
+                vk::raii::SwapchainKHR swapchain,
+                std::vector<vk::Image> swapchain_images,
+                vk::SurfaceFormatKHR swapchain_surface_format,
+                vk::Extent2D swapchain_extent
+            );
+            vk::raii::SwapchainKHR m_swapchain = nullptr;
+            std::vector<vk::Image> m_swapchain_images;
+            vk::SurfaceFormatKHR m_swapchain_surface_format;
+            vk::Extent2D m_swapchain_extent;
         };
     }
 }
