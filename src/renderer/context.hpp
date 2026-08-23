@@ -31,8 +31,10 @@ namespace glimpse {
                 const bool debug_mode
             );
             
+            // getters 
             const vk::raii::PhysicalDevice& get_physical_device() const;
             const vk::raii::SurfaceKHR& get_surface() const;
+            const vk::raii::Device& get_device() const;
 
         private:
             struct DeviceResources {

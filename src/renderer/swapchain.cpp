@@ -73,6 +73,38 @@ namespace glimpse::swapchain {
             }
             return min_image_count;
         }
+
+        std::vector<vk::raii::ImageView> create_image_views(
+            const vk::SurfaceFormatKHR& swapchain_surface_format,
+            const vk::raii::Device& device, 
+            const std::vector<vk::Image>& swapchain_images
+        ) {
+            std::vector<vk::raii::ImageView> swapchain_image_views;
+            vk::ImageViewCreateInfo image_view_create_info = vk::ImageViewCreateInfo()
+                .setViewType(vk::ImageViewType::e2D)
+                .setFormat(swapchain_surface_format.format)
+                .setSubresourceRange({
+                    vk::ImageAspectFlagBits::eColor,
+                    0,
+                    1,
+                    0,
+                    1
+                });
+
+            image_view_create_info.components = {
+                vk::ComponentSwizzle::eIdentity, 
+                vk::ComponentSwizzle::eIdentity, 
+                vk::ComponentSwizzle::eIdentity, 
+                vk::ComponentSwizzle::eIdentity
+            };
+
+            for (const auto& image: swapchain_images) {
+                image_view_create_info.image = image;
+                swapchain_image_views.emplace_back(device, image_view_create_info);
+            }
+
+            return swapchain_image_views;
+        }
     }
 
     std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
@@ -114,7 +146,19 @@ namespace glimpse::swapchain {
             .setPresentMode(swapchain_present_mode)
             .setClipped(true);
 
-        return std::unexpected("uh");
+        const auto& device = context.get_device();
+        auto swapchain = vk::raii::SwapchainKHR(device, swapchain_create_info);
+        const auto swapchain_images = swapchain.getImages();
+
+        auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
+
+        return VulkanSwapchain(
+            std::move(swapchain),
+            std::move(swapchain_images),
+            std::move(swapchain_surface_format),
+            std::move(swapchain_extent),
+            std::move(image_views)
+        );
     }
 
 
@@ -122,10 +166,12 @@ namespace glimpse::swapchain {
         vk::raii::SwapchainKHR swapchain,
         std::vector<vk::Image> swapchain_images,
         vk::SurfaceFormatKHR swapchain_surface_format,
-        vk::Extent2D swapchain_extent
+        vk::Extent2D swapchain_extent,
+        std::vector<vk::raii::ImageView> swapchain_image_views
     ) : m_swapchain(std::move(swapchain)), 
     m_swapchain_images(std::move(swapchain_images)),
     m_swapchain_surface_format(std::move(swapchain_surface_format)),
-    m_swapchain_extent(std::move(swapchain_extent)) 
+    m_swapchain_extent(std::move(swapchain_extent)),
+    m_swapchain_image_views(std::move(swapchain_image_views))
     {}
 }

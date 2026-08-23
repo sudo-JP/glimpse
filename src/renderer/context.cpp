@@ -357,4 +357,8 @@ namespace glimpse::renderer {
     const vk::raii::SurfaceKHR& VulkanContext::get_surface() const {
         return m_surface;
     }
+
+    const vk::raii::Device& VulkanContext::get_device() const {
+        return m_device;
+    }
 }

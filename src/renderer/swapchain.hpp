@@ -19,12 +19,14 @@ namespace glimpse {
                 vk::raii::SwapchainKHR swapchain,
                 std::vector<vk::Image> swapchain_images,
                 vk::SurfaceFormatKHR swapchain_surface_format,
-                vk::Extent2D swapchain_extent
+                vk::Extent2D swapchain_extent,
+                std::vector<vk::raii::ImageView> swapchain_image_views
             );
             vk::raii::SwapchainKHR m_swapchain = nullptr;
             std::vector<vk::Image> m_swapchain_images;
             vk::SurfaceFormatKHR m_swapchain_surface_format;
             vk::Extent2D m_swapchain_extent;
+            std::vector<vk::raii::ImageView> m_swapchain_image_views; 
         };
     }
 }
