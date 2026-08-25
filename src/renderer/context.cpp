@@ -250,14 +250,12 @@ namespace glimpse::renderer {
     ) {
         const char *app_name_c = app_context.name.c_str();
         const char *engine_name_c = engine_context.name.c_str();
-
-        vk::ApplicationInfo app_info{
-            app_name_c,
-            VK_MAKE_VERSION(app_context.version.major, app_context.version.minor, app_context.version.patch),
-            engine_name_c,
-            VK_MAKE_VERSION(engine_context.version.major, engine_context.version.minor, engine_context.version.patch),
-            vk::ApiVersion14
-        };
+        vk::ApplicationInfo app_info = vk::ApplicationInfo()
+            .setPApplicationName(app_name_c)
+            .setApplicationVersion(VK_MAKE_VERSION(app_context.version.major, app_context.version.minor, app_context.version.patch))
+            .setPEngineName(engine_name_c)
+            .setEngineVersion(VK_MAKE_VERSION(engine_context.version.major, engine_context.version.minor, engine_context.version.patch))
+            .setApiVersion(vk::ApiVersion14);
 
         try {
             vk::raii::Context context;
@@ -266,25 +264,24 @@ namespace glimpse::renderer {
             std::vector<const char*> glfw_extensions; 
 
             auto extension_result = required_extensions(context, debug_mode);
-            if (!extension_result) return std::unexpected(extension_result.error());
+            if (!extension_result) return std::unexpected(std::move(extension_result).error());
 
             glfw_extensions = std::move(extension_result).value();
 
             if (debug_mode) {
                 auto validation_result = required_layers(context);
-                if (!validation_result) return std::unexpected(validation_result.error());
+                if (!validation_result) return std::unexpected(std::move(validation_result).error());
                 
                 layers = std::move(validation_result).value();
             }
 
-            vk::InstanceCreateInfo create_info{
-                {},
-                &app_info,
-                static_cast<uint32_t>(layers.size()),
-                layers.data(),
-                static_cast<uint32_t>(glfw_extensions.size()),
-                glfw_extensions.data(),
-            };
+            vk::InstanceCreateInfo create_info = vk::InstanceCreateInfo()
+                .setPApplicationInfo(&app_info)
+                .setEnabledLayerCount(static_cast<uint32_t>(layers.size()))
+                .setPpEnabledLayerNames(layers.data())
+                .setEnabledExtensionCount(static_cast<uint32_t>(glfw_extensions.size()))
+                .setPpEnabledExtensionNames(glfw_extensions.data());
+
 
             vk::raii::Instance instance(context, create_info);
 
@@ -304,13 +301,13 @@ namespace glimpse::renderer {
 
             auto physical_device_result = pick_physical_device(instance);
             vk::raii::PhysicalDevice phys_device = nullptr;
-            if (!physical_device_result) return std::unexpected(physical_device_result.error());
+            if (!physical_device_result) return std::unexpected(std::move(physical_device_result).error());
 
             phys_device = std::move(physical_device_result).value();
             std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
 
             auto device_result = create_logical_device(phys_device, surface);
-            if (!device_result) return std::unexpected(device_result.error());
+            if (!device_result) return std::unexpected(std::move(device_result).error());
 
             auto [device, graphics_queue] = std::move(device_result).value();
             DeviceResources device_resources {

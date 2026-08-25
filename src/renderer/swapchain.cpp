@@ -125,11 +125,11 @@ namespace glimpse::swapchain {
 
         // Err handlings 
         auto swapchain_surface_format_res = choose_swap_surface_format(available_formats);
-        if (!swapchain_surface_format_res) return std::unexpected(swapchain_surface_format_res.error());
+        if (!swapchain_surface_format_res) return std::unexpected(std::move(swapchain_surface_format_res).error());
         auto swapchain_surface_format = std::move(swapchain_surface_format_res).value();
 
         auto swapchain_present_mode_res = choose_swap_presentation_mode(available_presentation_modes);
-        if (!swapchain_present_mode_res) return std::unexpected(swapchain_present_mode_res.error());
+        if (!swapchain_present_mode_res) return std::unexpected(std::move(swapchain_present_mode_res).error());
         auto swapchain_present_mode = std::move(swapchain_present_mode_res).value();
 
         vk::SwapchainCreateInfoKHR swapchain_create_info = vk::SwapchainCreateInfoKHR()
