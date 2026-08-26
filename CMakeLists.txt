@@ -12,6 +12,12 @@ find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(cmake/FindSlang.cmake)
+include(cmake/CompileSlang.cmake)
+
+find_slang_files(SLANG_FILES)
+compile_slangs(${SLANG_FILES})
+
 add_executable(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 

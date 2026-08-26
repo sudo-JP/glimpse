@@ -1,4 +1,5 @@
 // Misc
+#include <iostream>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include "context.hpp"
@@ -51,6 +52,10 @@ namespace glimpse::renderer {
                 const vk::raii::Context& context, const bool debug) {
             uint32_t glfw_extension_count = 0; 
             auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+            std::cout << "extensions: " << glfw_extensions << std::endl;
+            if (!glfw_extensions) {
+                return std::unexpected("glfwGetRequiredInstanceExtensions failed");
+            }
             
             std::vector extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
             if (debug) {

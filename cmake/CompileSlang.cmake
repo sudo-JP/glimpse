@@ -6,7 +6,7 @@ function(compile_slangs SLANG_FILES)
     set(SLANG_TARGET -target spirv -profile spirv_1_4 -emit-spirv-directly)
     set(SLANG_FLAGS ${SLANG_TARGET} -fvk-use-entrypoint-name ${SLANG_ENTRY} -o)
     foreach(SLANG_FILE ${SLANG_FILES})
-        get_filename_component(SHADER_NAME ${SLANG_FILE} NAME_WITHOUT_EXTENSION)
+        cmake_path(GET SLANG_FILE STEM SHADER_NAME)
         set(SHADER_SPV ${SHADERS_OUTPUT_DIR}/${SHADER_NAME}.spv)
         add_custom_command(
             OUTPUT ${SHADER_SPV}
