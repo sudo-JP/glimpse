@@ -11,7 +11,7 @@ int main() {
     }
     
     const auto window = std::move(window_result).value();
-    const GLFWwindow *window_ptr = window.get_window();
+    GLFWwindow *window_ptr = window.get_window();
 
     glimpse::Version version {
         1, 0, 0

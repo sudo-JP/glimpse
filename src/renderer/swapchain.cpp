@@ -9,7 +9,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-namespace glimpse::swapchain {
+namespace glimpse::renderer {
     namespace {
         std::expected<vk::SurfaceFormatKHR, std::string> choose_swap_surface_format(
             const std::vector<vk::SurfaceFormatKHR>& available_formats 

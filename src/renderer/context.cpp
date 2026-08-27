@@ -1,6 +1,6 @@
 // Misc
-#include <iostream>
 #define GLFW_INCLUDE_VULKAN
+#include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 #include "context.hpp"
 
@@ -52,7 +52,7 @@ namespace glimpse::renderer {
                 const vk::raii::Context& context, const bool debug) {
             uint32_t glfw_extension_count = 0; 
             auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-            std::cout << "extensions: " << glfw_extensions << std::endl;
+
             if (!glfw_extensions) {
                 return std::unexpected("glfwGetRequiredInstanceExtensions failed");
             }
@@ -245,7 +245,7 @@ namespace glimpse::renderer {
             vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_queue_idx, 0);
             return std::pair{std::move(device), std::move(graphics_queue)};
         }
-    }
+    } // Helper namespace end
 
     std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
         const ContextAppInfo& app_context, 
@@ -298,11 +298,6 @@ namespace glimpse::renderer {
             }
             surface = vk::raii::SurfaceKHR(instance, _surface);
 
-            ContextInstance context_instance {
-                std::move(context), 
-                std::move(instance),
-                std::move(surface)
-            };
 
             auto physical_device_result = pick_physical_device(instance);
             vk::raii::PhysicalDevice phys_device = nullptr;
@@ -315,17 +310,22 @@ namespace glimpse::renderer {
             if (!device_result) return std::unexpected(std::move(device_result).error());
 
             auto [device, graphics_queue] = std::move(device_result).value();
-            DeviceResources device_resources {
-                std::move(device),
-                std::move(graphics_queue),
-                std::move(phys_device), 
-            };
 
             std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger = std::nullopt; 
 
             if (debug_mode) {
                 debug_messenger = setup_debug_messenger(instance);
             }
+            ContextInstance context_instance {
+                std::move(context), 
+                std::move(instance),
+                std::move(surface)
+            };
+            DeviceResources device_resources {
+                std::move(phys_device), 
+                std::move(device),
+                std::move(graphics_queue)
+            };
 
             return VulkanContext(
                 std::move(context_instance),
@@ -352,6 +352,7 @@ namespace glimpse::renderer {
     m_surface(std::move(context_instance.surface))
     {}
 
+    // Getters 
     const vk::raii::PhysicalDevice& VulkanContext::get_physical_device() const {
         return m_physical_device;
     }

@@ -6,7 +6,7 @@
 #include "window/window.hpp"
 
 namespace glimpse {
-    namespace swapchain {
+    namespace renderer {
         class VulkanSwapchain {
         public:
             static std::expected<VulkanSwapchain, std::string> new_vk_swapchain(

@@ -30,6 +30,7 @@ namespace glimpse {
                 const Window& window, 
                 const bool debug_mode
             );
+
             
             // getters 
             const vk::raii::PhysicalDevice& get_physical_device() const;
@@ -38,9 +39,9 @@ namespace glimpse {
 
         private:
             struct DeviceResources {
+                vk::raii::PhysicalDevice physical_device;
                 vk::raii::Device device;
                 vk::raii::Queue graphics_queue;
-                vk::raii::PhysicalDevice physical_device;
             };
 
             struct ContextInstance {
