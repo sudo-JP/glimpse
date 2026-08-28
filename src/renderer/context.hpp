@@ -50,10 +50,6 @@ namespace glimpse {
                 vk::raii::SurfaceKHR surface; 
             };
 
-            struct VKDebug {
-                vk::raii::DebugUtilsMessengerEXT debug_messenger;
-            };
-
             VulkanContext(
                 ContextInstance context_instance, 
                 DeviceResources device_resources, 

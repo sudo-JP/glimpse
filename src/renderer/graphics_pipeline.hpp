@@ -1,17 +1,24 @@
 #pragma once
 
+#include "context.hpp"
 #include <expected>
 #include <vulkan/vulkan_raii.hpp>
-#include "context.hpp"
 
 namespace glimpse {
     namespace renderer {
+        struct ShaderStageConfig {
+            std::string filename;
+            std::string vert_entry = "vertMain";
+            std::string frag_entry = "fragMain";
+        };
+
         class GraphicsPipeline {
         public:
-            std::expected<vk::raii::ShaderModule, std::string> create_shader_module(
-                const std::string& filename, const glimpse::renderer::VulkanContext& context
+            static std::expected<GraphicsPipeline, std::string> new_graphics_pipeline(
+                const ShaderStageConfig& shader_config, const glimpse::renderer::VulkanContext& context
             );
         private:
+            GraphicsPipeline();
             vk::raii::PipelineLayout m_pipeline_layout = nullptr; 
         };
     }
