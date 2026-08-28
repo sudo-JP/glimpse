@@ -174,4 +174,8 @@ namespace glimpse::renderer {
     m_swapchain_extent(std::move(swapchain_extent)),
     m_swapchain_image_views(std::move(swapchain_image_views))
     {}
+
+    const vk::Extent2D VulkanSwapchain::get_extent() const {
+        return m_swapchain_extent;
+    }
 }

@@ -1,4 +1,5 @@
 #include "graphics_pipeline.hpp"
+#include "vulkan/vulkan.hpp"
 #include <fstream>
 
 namespace glimpse::renderer {
@@ -32,7 +33,9 @@ namespace glimpse::renderer {
     }
 
     std::expected<GraphicsPipeline, std::string> GraphicsPipeline::new_graphics_pipeline(
-        const ShaderStageConfig& shader_config, const glimpse::renderer::VulkanContext& context
+        const ShaderStageConfig& shader_config, 
+        const glimpse::renderer::VulkanContext& context,
+        const glimpse::renderer::VulkanSwapchain& swapchain
     ) {
         auto shader_module_res = create_shader_module(shader_config.filename, context);
         if (!shader_module_res) return std::unexpected(std::move(shader_module_res).error());
@@ -58,12 +61,58 @@ namespace glimpse::renderer {
             fragment_shader_create_info
         };
 
+        vk::PipelineVertexInputStateCreateInfo vertex_input_info;
+
+        vk::PipelineInputAssemblyStateCreateInfo input_assembly = vk::PipelineInputAssemblyStateCreateInfo()
+            .setTopology(vk::PrimitiveTopology::eTriangleList);
+
+        const auto& swapchain_extent = swapchain.get_extent();
+
+        vk::Viewport viewport = vk::Viewport()
+            .setX(0.0f)
+            .setY(0.0f)
+            .setHeight(static_cast<float>(swapchain_extent.width))
+            .setWidth(static_cast<float>(swapchain_extent.height));
+
+        vk::Offset2D scissor_offset = vk::Offset2D()
+            .setX(0)
+            .setY(0);
+
+        vk::Rect2D scissor = vk::Rect2D()
+            .setOffset(scissor_offset)
+            .setExtent(swapchain_extent);
+
         std::vector<vk::DynamicState> dynamic_states = {
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor
         };
 
-        vk::PipelineVertexInputStateCreateInfo vertex_input_info;
+        vk::PipelineViewportStateCreateInfo viewport_state = vk::PipelineViewportStateCreateInfo()
+            .setViewportCount(1)
+            .setScissorCount(1)
+            .setPViewports(&viewport)
+            .setPScissors(&scissor);
+
+        vk::PipelineRasterizationStateCreateInfo rasterizer = vk::PipelineRasterizationStateCreateInfo()
+            .setDepthClampEnable(vk::False)
+            .setRasterizerDiscardEnable(vk::False)
+            .setPolygonMode(vk::PolygonMode::eFill)
+            .setCullMode(vk::CullModeFlagBits::eBack)
+            .setFrontFace(vk::FrontFace::eClockwise)
+            .setDepthBiasEnable(vk::False)
+            .setLineWidth(1.0f);
+
+        vk::PipelineMultisampleStateCreateInfo multisampling = vk::PipelineMultisampleStateCreateInfo()
+            .setRasterizationSamples(vk::SampleCountFlagBits::e1)
+            .setSampleShadingEnable(vk::False);
+
+        vk::PipelineColorBlendAttachmentState color_blend_attachment = vk::PipelineColorBlendAttachmentState()
+            .setBlendEnable(vk::False)
+            .setColorWriteMask(
+            vk::ColorComponentFlagBits::eR
+                | vk::ColorComponentFlagBits::eG
+                | vk::ColorComponentFlagBits::eB
+            );
         
         return GraphicsPipeline();
     }

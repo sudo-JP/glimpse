@@ -13,6 +13,9 @@ namespace glimpse {
                 const renderer::VulkanContext& context,
                 const glimpse::Window& window
             );
+
+            // getters
+            const vk::Extent2D get_extent() const;
             
         private: 
             VulkanSwapchain(
