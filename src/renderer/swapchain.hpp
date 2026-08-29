@@ -16,6 +16,7 @@ namespace glimpse {
 
             // getters
             const vk::Extent2D get_extent() const;
+            const vk::SurfaceFormatKHR get_format() const;
             
         private: 
             VulkanSwapchain(

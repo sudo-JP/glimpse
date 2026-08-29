@@ -14,6 +14,7 @@ namespace glimpse::renderer {
             file.close();
             return buffer;
         }
+
         [[nodiscard]] std::expected<vk::raii::ShaderModule, std::string> create_shader_module(
             const std::string& filename, const glimpse::renderer::VulkanContext& context
         ) {
@@ -21,7 +22,7 @@ namespace glimpse::renderer {
             if (!shader_file_res) return std::unexpected(std::move(shader_file_res).error());
             auto shader_file = std::move(shader_file_res).value();
 
-            vk::ShaderModuleCreateInfo create_info = vk::ShaderModuleCreateInfo()
+            auto create_info = vk::ShaderModuleCreateInfo()
                 .setCodeSize(shader_file.size() * sizeof(char))
                 .setPCode(reinterpret_cast<const uint32_t*>(shader_file.data()));
 
@@ -30,7 +31,7 @@ namespace glimpse::renderer {
             vk::raii::ShaderModule shader_module(device, create_info);
             return shader_module;
         }
-    }
+    } // end helper namespace
 
     std::expected<GraphicsPipeline, std::string> GraphicsPipeline::new_graphics_pipeline(
         const ShaderStageConfig& shader_config, 
@@ -51,7 +52,7 @@ namespace glimpse::renderer {
             .setPName(vertex_entry);
 
         // Fragment
-        vk::PipelineShaderStageCreateInfo fragment_shader_create_info = vk::PipelineShaderStageCreateInfo()
+        auto fragment_shader_create_info = vk::PipelineShaderStageCreateInfo()
             .setStage(vk::ShaderStageFlagBits::eFragment)
             .setModule(shader_module)
             .setPName(fragment_entry);
@@ -63,7 +64,8 @@ namespace glimpse::renderer {
 
         vk::PipelineVertexInputStateCreateInfo vertex_input_info;
 
-        vk::PipelineInputAssemblyStateCreateInfo input_assembly = vk::PipelineInputAssemblyStateCreateInfo()
+        // Fixed functions set up
+        auto input_assembly = vk::PipelineInputAssemblyStateCreateInfo()
             .setTopology(vk::PrimitiveTopology::eTriangleList);
 
         const auto& swapchain_extent = swapchain.get_extent();
@@ -86,14 +88,17 @@ namespace glimpse::renderer {
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor
         };
+        auto dynamic_state = vk::PipelineDynamicStateCreateInfo()
+            .setDynamicStateCount(static_cast<uint32_t>(dynamic_states.size()))
+            .setPDynamicStates(dynamic_states.data());
 
-        vk::PipelineViewportStateCreateInfo viewport_state = vk::PipelineViewportStateCreateInfo()
+        auto viewport_state = vk::PipelineViewportStateCreateInfo()
             .setViewportCount(1)
             .setScissorCount(1)
             .setPViewports(&viewport)
             .setPScissors(&scissor);
 
-        vk::PipelineRasterizationStateCreateInfo rasterizer = vk::PipelineRasterizationStateCreateInfo()
+        auto rasterizer = vk::PipelineRasterizationStateCreateInfo()
             .setDepthClampEnable(vk::False)
             .setRasterizerDiscardEnable(vk::False)
             .setPolygonMode(vk::PolygonMode::eFill)
@@ -102,18 +107,71 @@ namespace glimpse::renderer {
             .setDepthBiasEnable(vk::False)
             .setLineWidth(1.0f);
 
-        vk::PipelineMultisampleStateCreateInfo multisampling = vk::PipelineMultisampleStateCreateInfo()
+        auto multisampling = vk::PipelineMultisampleStateCreateInfo()
             .setRasterizationSamples(vk::SampleCountFlagBits::e1)
             .setSampleShadingEnable(vk::False);
 
-        vk::PipelineColorBlendAttachmentState color_blend_attachment = vk::PipelineColorBlendAttachmentState()
+        auto color_blend_attachment = vk::PipelineColorBlendAttachmentState()
             .setBlendEnable(vk::False)
             .setColorWriteMask(
             vk::ColorComponentFlagBits::eR
                 | vk::ColorComponentFlagBits::eG
                 | vk::ColorComponentFlagBits::eB
             );
-        
-        return GraphicsPipeline();
+
+        auto color_blending = vk::PipelineColorBlendStateCreateInfo()
+            .setLogicOpEnable(vk::False)
+            .setLogicOp(vk::LogicOp::eCopy)
+            .setAttachmentCount(1)
+            .setPAttachments(&color_blend_attachment);
+
+        auto pipeline_layout_info = vk::PipelineLayoutCreateInfo()
+            .setSetLayoutCount(0)
+            .setPushConstantRangeCount(0);
+
+        const auto& device = context.get_device();
+        auto pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_info);
+
+        auto const& swapchain_format = swapchain.get_format();
+
+        auto pipeline_create_info_chain = vk::StructureChain<
+            vk::GraphicsPipelineCreateInfo, 
+            vk::PipelineRenderingCreateInfo
+        >();
+
+        pipeline_create_info_chain.get<vk::GraphicsPipelineCreateInfo>()
+            .setStageCount(2)
+            .setPStages(shader_stages)
+            .setPVertexInputState(&vertex_input_info)
+            .setPInputAssemblyState(&input_assembly)
+            .setPViewportState(&viewport_state)
+            .setPRasterizationState(&rasterizer)
+            .setPMultisampleState(&multisampling)
+            .setPColorBlendState(&color_blending)
+            .setLayout(pipeline_layout)
+            .setPDynamicState(&dynamic_state)
+            .setRenderPass(nullptr);
+
+        pipeline_create_info_chain.get<vk::PipelineRenderingCreateInfo>()
+            .setColorAttachmentCount(1)
+            .setPColorAttachmentFormats(&swapchain_format.format);
+
+        auto graphics_pipeline = vk::raii::Pipeline(
+            device, nullptr, pipeline_create_info_chain.get<vk::GraphicsPipelineCreateInfo>()
+        );
+
+        return GraphicsPipeline(
+            std::move(pipeline_layout),
+            std::move(graphics_pipeline)
+        );
     }
+
+
+    GraphicsPipeline::GraphicsPipeline(
+        vk::raii::PipelineLayout pipeline_layout,
+        vk::raii::Pipeline graphics_pipeline
+    ) :
+    m_pipeline_layout(std::move(pipeline_layout)),
+    m_graphics_pipeline(std::move(graphics_pipeline))
+    {}
 }

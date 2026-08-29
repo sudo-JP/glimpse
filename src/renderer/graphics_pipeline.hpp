@@ -21,8 +21,12 @@ namespace glimpse {
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
         private:
-            GraphicsPipeline();
+            GraphicsPipeline(
+                vk::raii::PipelineLayout pipeline_layout,
+                vk::raii::Pipeline graphics_pipeline
+            );
             vk::raii::PipelineLayout m_pipeline_layout = nullptr; 
+            vk::raii::Pipeline m_graphics_pipeline = nullptr;
         };
     }
 }

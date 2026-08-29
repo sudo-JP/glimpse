@@ -80,7 +80,7 @@ namespace glimpse::renderer {
             const std::vector<vk::Image>& swapchain_images
         ) {
             std::vector<vk::raii::ImageView> swapchain_image_views;
-            vk::ImageViewCreateInfo image_view_create_info = vk::ImageViewCreateInfo()
+            auto image_view_create_info = vk::ImageViewCreateInfo()
                 .setViewType(vk::ImageViewType::e2D)
                 .setFormat(swapchain_surface_format.format)
                 .setSubresourceRange({
@@ -132,7 +132,7 @@ namespace glimpse::renderer {
         if (!swapchain_present_mode_res) return std::unexpected(std::move(swapchain_present_mode_res).error());
         auto swapchain_present_mode = std::move(swapchain_present_mode_res).value();
 
-        vk::SwapchainCreateInfoKHR swapchain_create_info = vk::SwapchainCreateInfoKHR()
+        auto swapchain_create_info = vk::SwapchainCreateInfoKHR()
             .setSurface(*surface)
             .setMinImageCount(min_image_count)
             .setImageFormat(swapchain_surface_format.format)
@@ -177,5 +177,9 @@ namespace glimpse::renderer {
 
     const vk::Extent2D VulkanSwapchain::get_extent() const {
         return m_swapchain_extent;
+    }
+
+    const vk::SurfaceFormatKHR VulkanSwapchain::get_format() const {
+        return m_swapchain_surface_format;
     }
 }

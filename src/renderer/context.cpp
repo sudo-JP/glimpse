@@ -106,12 +106,11 @@ namespace glimpse::renderer {
                 | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
             );
 
-            vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info_ext{
-                vk::DebugUtilsMessengerCreateFlagsEXT{}, 
-                severity_flags,
-                message_type_flags,
-                &debug_callback
-            };
+            auto debug_utils_messenger_create_info_ext = vk::DebugUtilsMessengerCreateInfoEXT()
+                .setFlags(vk::DebugUtilsMessengerCreateFlagsEXT())
+                .setMessageSeverity(severity_flags)
+                .setMessageType(message_type_flags)
+                .setPfnUserCallback(&debug_callback);
 
             return instance.createDebugUtilsMessengerEXT(debug_utils_messenger_create_info_ext);
         }
@@ -204,12 +203,11 @@ namespace glimpse::renderer {
 
             float queue_priority = 1.0f;
             int queue_count = 1; 
-            vk::DeviceQueueCreateInfo device_queue_create_info(
-                vk::DeviceQueueCreateFlags(),
-                graphics_queue_idx,
-                queue_count,
-                &queue_priority
-            );
+            auto device_queue_create_info = vk::DeviceQueueCreateInfo()
+                .setFlags(vk::DeviceQueueCreateFlags())
+                .setQueueFamilyIndex(graphics_queue_idx)
+                .setQueueCount(queue_count)
+                .setPQueuePriorities(&queue_priority);
 
             vk::PhysicalDeviceFeatures device_features; 
 
@@ -233,7 +231,7 @@ namespace glimpse::renderer {
             };
 
             int queue_create_info_count = 1; 
-            vk::DeviceCreateInfo device_create_info = vk::DeviceCreateInfo()
+            auto device_create_info = vk::DeviceCreateInfo()
                 .setPNext(&feature_chain.get<vk::PhysicalDeviceFeatures2>())
                 .setQueueCreateInfoCount(queue_create_info_count)
                 .setPQueueCreateInfos(&device_queue_create_info)
@@ -255,7 +253,7 @@ namespace glimpse::renderer {
     ) {
         const char *app_name_c = app_context.name.c_str();
         const char *engine_name_c = engine_context.name.c_str();
-        vk::ApplicationInfo app_info = vk::ApplicationInfo()
+        auto app_info = vk::ApplicationInfo()
             .setPApplicationName(app_name_c)
             .setApplicationVersion(VK_MAKE_VERSION(app_context.version.major, app_context.version.minor, app_context.version.patch))
             .setPEngineName(engine_name_c)
@@ -280,7 +278,7 @@ namespace glimpse::renderer {
                 layers = std::move(validation_result).value();
             }
 
-            vk::InstanceCreateInfo create_info = vk::InstanceCreateInfo()
+            auto create_info = vk::InstanceCreateInfo()
                 .setPApplicationInfo(&app_info)
                 .setEnabledLayerCount(static_cast<uint32_t>(layers.size()))
                 .setPpEnabledLayerNames(layers.data())
