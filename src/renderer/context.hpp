@@ -1,5 +1,6 @@
 #pragma once
 #include "window/window.hpp"
+#include <cstdint>
 #include <expected>
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
@@ -36,6 +37,7 @@ namespace glimpse {
             const vk::raii::PhysicalDevice& get_physical_device() const;
             const vk::raii::SurfaceKHR& get_surface() const;
             const vk::raii::Device& get_device() const;
+            const uint32_t get_graphics_queue_index() const;
 
         private:
             struct DeviceResources {
@@ -53,7 +55,8 @@ namespace glimpse {
             VulkanContext(
                 ContextInstance context_instance, 
                 DeviceResources device_resources, 
-                std::optional<vk::raii::DebugUtilsMessengerEXT>debug_messenger
+                std::optional<vk::raii::DebugUtilsMessengerEXT>debug_messenger,
+                uint32_t graphics_queue_index
             );
             vk::raii::Context m_context;
             vk::raii::Instance m_instance = nullptr;
@@ -62,6 +65,7 @@ namespace glimpse {
             vk::raii::Queue m_graphics_queue = nullptr; 
             std::optional<vk::raii::DebugUtilsMessengerEXT> m_debug_messenger;
             vk::raii::SurfaceKHR m_surface = nullptr;
+            uint32_t m_graphics_queue_index; 
         };
     }
 }

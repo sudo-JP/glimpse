@@ -1,4 +1,5 @@
 // Misc
+#include <tuple>
 #define GLFW_INCLUDE_VULKAN
 #include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
@@ -178,7 +179,7 @@ namespace glimpse::renderer {
             return std::unexpected("failed to find a suitable discrete GPU");
         }
 
-        std::expected<std::pair<vk::raii::Device, vk::raii::Queue>, std::string> 
+        std::expected<std::tuple<vk::raii::Device, vk::raii::Queue, uint32_t>, std::string> 
             create_logical_device(
             const vk::raii::PhysicalDevice& physical_device,
             const vk::SurfaceKHR& surface
@@ -241,7 +242,7 @@ namespace glimpse::renderer {
             
             vk::raii::Device device(physical_device, device_create_info);
             vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_queue_idx, 0);
-            return std::pair{std::move(device), std::move(graphics_queue)};
+            return std::tuple{std::move(device), std::move(graphics_queue), graphics_queue_idx};
         }
     } // Helper namespace end
 
@@ -307,7 +308,7 @@ namespace glimpse::renderer {
             auto device_result = create_logical_device(phys_device, surface);
             if (!device_result) return std::unexpected(std::move(device_result).error());
 
-            auto [device, graphics_queue] = std::move(device_result).value();
+            auto [device, graphics_queue, graphics_queue_idx] = std::move(device_result).value();
 
             std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger = std::nullopt; 
 
@@ -328,7 +329,8 @@ namespace glimpse::renderer {
             return VulkanContext(
                 std::move(context_instance),
                 std::move(device_resources),
-                std::move(debug_messenger)
+                std::move(debug_messenger),
+                graphics_queue_idx
             );    
         } catch (const vk::SystemError& err) {
             return std::unexpected(err.what());
@@ -339,7 +341,9 @@ namespace glimpse::renderer {
     VulkanContext::VulkanContext(
         ContextInstance context_instance, 
         DeviceResources device_resources, 
-        std::optional<vk::raii::DebugUtilsMessengerEXT>debug_messenger) 
+        std::optional<vk::raii::DebugUtilsMessengerEXT>debug_messenger,
+        uint32_t graphics_queue_index
+    ) 
     // The actual init
     : m_context(std::move(context_instance.context)),
     m_instance(std::move(context_instance.instance)),
@@ -347,7 +351,8 @@ namespace glimpse::renderer {
     m_device(std::move(device_resources.device)),
     m_graphics_queue(std::move(device_resources.graphics_queue)),
     m_debug_messenger(std::move(debug_messenger)),
-    m_surface(std::move(context_instance.surface))
+    m_surface(std::move(context_instance.surface)),
+    m_graphics_queue_index(graphics_queue_index)
     {}
 
     // Getters 
@@ -361,5 +366,9 @@ namespace glimpse::renderer {
 
     const vk::raii::Device& VulkanContext::get_device() const {
         return m_device;
+    }
+
+    const uint32_t VulkanContext::get_graphics_queue_index() const {
+        return m_graphics_queue_index;
     }
 }
