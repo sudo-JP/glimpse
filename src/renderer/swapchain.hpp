@@ -17,6 +17,8 @@ namespace glimpse {
             // getters
             const vk::Extent2D get_extent() const;
             const vk::SurfaceFormatKHR get_format() const;
+            const std::expected<vk::Image, std::string> get_image(uint32_t index) const;
+            const std::expected<vk::ImageView, std::string> get_image_view(uint32_t index) const;
             
         private: 
             VulkanSwapchain(

@@ -174,4 +174,8 @@ namespace glimpse::renderer {
     m_pipeline_layout(std::move(pipeline_layout)),
     m_graphics_pipeline(std::move(graphics_pipeline))
     {}
+
+    const vk::raii::Pipeline& GraphicsPipeline::get_graphics_pipeline() const {
+        return m_graphics_pipeline;
+    }
 }

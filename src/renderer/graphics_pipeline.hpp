@@ -20,6 +20,9 @@ namespace glimpse {
                 const glimpse::renderer::VulkanContext& context,
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
+
+            // Getters
+            const vk::raii::Pipeline& get_graphics_pipeline() const;
         private:
             GraphicsPipeline(
                 vk::raii::PipelineLayout pipeline_layout,

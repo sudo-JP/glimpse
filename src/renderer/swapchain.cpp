@@ -182,4 +182,16 @@ namespace glimpse::renderer {
     const vk::SurfaceFormatKHR VulkanSwapchain::get_format() const {
         return m_swapchain_surface_format;
     }
+
+    const std::expected<vk::Image, std::string> VulkanSwapchain::get_image(uint32_t index) const {
+        if (index < 0 || index >= m_swapchain_images.size()) return std::unexpected("invalid image index");
+
+        return m_swapchain_images[index];
+    }
+
+    const std::expected<vk::ImageView, std::string> VulkanSwapchain::get_image_view(uint32_t index) const {
+        if (index < 0 || index >= m_swapchain_images.size()) return std::unexpected("invalid image view index");
+
+        return m_swapchain_image_views[index];
+    }
 }
