@@ -125,6 +125,43 @@ namespace glimpse::renderer {
         const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
+        command_buffer.setViewport(
+            0, 
+            vk::Viewport(
+                0.0f, 
+                0.0f, 
+                static_cast<float>(swapchain_extent.width), 
+                static_cast<float>(swapchain_extent.height),
+                0.0f,
+                1.0f
+            )
+        );
+
+        command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapchain_extent));
+
+        command_buffer.draw(
+            3,  // Vertex count
+            1,  // Instance count
+            0,  // first vertex offset
+            0   // first instance offset
+        );
+
+        command_buffer.endRendering();
+
+        transition_res = transition_image_layout(
+            image_index,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            {},
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eBottomOfPipe,
+            swapchain
+        );
+        if (!transition_res) {
+            command_buffer.reset();
+            return std::unexpected(std::move(transition_res).error());
+        }
 
         command_buffer.end();
         return {};
