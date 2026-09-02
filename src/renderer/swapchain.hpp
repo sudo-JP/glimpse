@@ -14,11 +14,15 @@ namespace glimpse {
                 const glimpse::Window& window
             );
 
+            vk::ResultValue<uint32_t> acquire_next_image(const vk::raii::Semaphore& semaphore);
+
             // getters
             const vk::Extent2D get_extent() const;
             const vk::SurfaceFormatKHR get_format() const;
             const std::expected<vk::Image, std::string> get_image(uint32_t index) const;
             const std::expected<vk::ImageView, std::string> get_image_view(uint32_t index) const;
+            const vk::raii::SwapchainKHR& get_swapchain() const;
+            const std::vector<vk::Image>& get_swapchain_images() const;
             
         private: 
             VulkanSwapchain(

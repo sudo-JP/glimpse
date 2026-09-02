@@ -371,4 +371,8 @@ namespace glimpse::renderer {
     const uint32_t VulkanContext::get_graphics_queue_index() const {
         return m_graphics_queue_index;
     }
+
+    const vk::raii::Queue& VulkanContext::get_queue() const {
+        return m_graphics_queue;
+    }
 }

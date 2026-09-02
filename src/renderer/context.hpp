@@ -38,6 +38,7 @@ namespace glimpse {
             const vk::raii::SurfaceKHR& get_surface() const;
             const vk::raii::Device& get_device() const;
             const uint32_t get_graphics_queue_index() const;
+            const vk::raii::Queue& get_queue() const;
 
         private:
             struct DeviceResources {

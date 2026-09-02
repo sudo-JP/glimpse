@@ -19,6 +19,11 @@ namespace glimpse {
                 const glimpse::renderer::VulkanSwapchain& swapchain,
                 const glimpse::renderer::GraphicsPipeline& pipeline
             );
+
+            // getters
+            const vk::raii::CommandBuffer& get_command_buffer() const;
+
+            static constexpr int max_frames_in_flight = 2;
         private:
             std::expected<void, std::string> transition_image_layout(
                 uint32_t image_index,

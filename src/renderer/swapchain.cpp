@@ -175,6 +175,10 @@ namespace glimpse::renderer {
     m_swapchain_image_views(std::move(swapchain_image_views))
     {}
 
+    vk::ResultValue<uint32_t> VulkanSwapchain::acquire_next_image(const vk::raii::Semaphore& semaphore) {
+        return m_swapchain.acquireNextImage(UINT64_MAX, *semaphore, nullptr);
+    }
+
     const vk::Extent2D VulkanSwapchain::get_extent() const {
         return m_swapchain_extent;
     }
@@ -193,5 +197,13 @@ namespace glimpse::renderer {
         if (index < 0 || index >= m_swapchain_images.size()) return std::unexpected("invalid image view index");
 
         return m_swapchain_image_views[index];
+    }
+
+    const vk::raii::SwapchainKHR& VulkanSwapchain::get_swapchain() const {
+        return m_swapchain;
+    }
+
+    const std::vector<vk::Image>& VulkanSwapchain::get_swapchain_images() const {
+        return m_swapchain_images;
     }
 }

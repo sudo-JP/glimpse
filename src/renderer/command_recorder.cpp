@@ -10,7 +10,6 @@ namespace glimpse::renderer {
         const VulkanContext& context
     ) {
         const uint32_t graphics_queue_index = context.get_graphics_queue_index();
-        constexpr int max_frames_in_flight = 2;
 
         auto pool_info = vk::CommandPoolCreateInfo()
             .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
@@ -165,5 +164,9 @@ namespace glimpse::renderer {
 
         command_buffer.end();
         return {};
+    }
+
+    const vk::raii::CommandBuffer& CommandRecorder::get_command_buffer() const {
+        return m_command_buffers[m_frame_index];
     }
 }
