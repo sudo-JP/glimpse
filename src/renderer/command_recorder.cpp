@@ -7,7 +7,8 @@
 
 namespace glimpse::renderer {
     CommandRecorder CommandRecorder::new_command_recorder(
-        const VulkanContext& context
+        const VulkanContext& context,
+        size_t max_frames_in_flight
     ) {
         const uint32_t graphics_queue_index = context.get_graphics_queue_index();
 
@@ -25,7 +26,10 @@ namespace glimpse::renderer {
 
         auto command_buffer = vk::raii::CommandBuffers(device, alloc_info);
 
-        return CommandRecorder();
+        return CommandRecorder(
+            std::move(command_pool),
+            std::move(command_buffer)
+        );
     }
 
     std::expected<void, std::string> CommandRecorder::transition_image_layout(
@@ -36,6 +40,7 @@ namespace glimpse::renderer {
         vk::AccessFlags2 dst_access_mask,
         vk::PipelineStageFlags2 src_stage_mask,
         vk::PipelineStageFlags2 dst_stage_mask,
+        size_t frame_index,
         const glimpse::renderer::VulkanSwapchain& swapchain
     ) {
         const auto image_res = swapchain.get_image(image_index);
@@ -67,16 +72,17 @@ namespace glimpse::renderer {
             .setImageMemoryBarrierCount(1)
             .setPImageMemoryBarriers(&barrier);
 
-        m_command_buffers[m_frame_index].pipelineBarrier2(dependency_info);
+        m_command_buffers[frame_index].pipelineBarrier2(dependency_info);
         return {};
     }
 
     std::expected<void, std::string> CommandRecorder::record_command_buffer(
         uint32_t image_index,
+        size_t frame_index,
         const glimpse::renderer::VulkanSwapchain& swapchain,
         const glimpse::renderer::GraphicsPipeline& pipeline
     ) {
-        const auto& command_buffer = m_command_buffers[m_frame_index];
+        const auto& command_buffer = m_command_buffers[frame_index];
         command_buffer.begin({});
         auto transition_res = transition_image_layout(
             image_index,
@@ -86,6 +92,7 @@ namespace glimpse::renderer {
             vk::AccessFlagBits2::eColorAttachmentWrite,
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            frame_index,
             swapchain
         );
         if (!transition_res) {
@@ -155,6 +162,7 @@ namespace glimpse::renderer {
             {},
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
             vk::PipelineStageFlagBits2::eBottomOfPipe,
+            frame_index,
             swapchain
         );
         if (!transition_res) {
@@ -166,7 +174,19 @@ namespace glimpse::renderer {
         return {};
     }
 
-    const vk::raii::CommandBuffer& CommandRecorder::get_command_buffer() const {
-        return m_command_buffers[m_frame_index];
+
+    const vk::raii::CommandBuffer& CommandRecorder::get_command_buffer(size_t index) const {
+        return m_command_buffers[index];
     }
+
+    void CommandRecorder::reset_command_buffer(size_t index) {
+        m_command_buffers[index].reset();
+    }
+
+    CommandRecorder::CommandRecorder(
+        vk::raii::CommandPool command_pool,
+        vk::raii::CommandBuffers command_buffers
+    ): m_command_pool(std::move(command_pool)),
+    m_command_buffers(std::move(command_buffers)) 
+    {}
 }

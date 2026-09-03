@@ -3,6 +3,7 @@
 #include "renderer/context.hpp"
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/swapchain.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -11,20 +12,25 @@ namespace glimpse {
         class CommandRecorder {
         public:
             static CommandRecorder new_command_recorder(
-                const VulkanContext& context
+                const VulkanContext& context,
+                size_t max_frames_in_flight
             );
 
             std::expected<void, std::string> record_command_buffer(
                 uint32_t image_index,
+                size_t frame_index,
                 const glimpse::renderer::VulkanSwapchain& swapchain,
                 const glimpse::renderer::GraphicsPipeline& pipeline
             );
 
+            void reset_command_buffer(size_t index);
             // getters
-            const vk::raii::CommandBuffer& get_command_buffer() const;
-
-            static constexpr int max_frames_in_flight = 2;
+            const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
         private:
+            CommandRecorder(
+                vk::raii::CommandPool command_pool,
+                vk::raii::CommandBuffers command_buffers
+            );
             std::expected<void, std::string> transition_image_layout(
                 uint32_t image_index,
                 vk::ImageLayout old_layout,
@@ -33,11 +39,11 @@ namespace glimpse {
                 vk::AccessFlags2 dst_access_mask,
                 vk::PipelineStageFlags2 src_stage_mask,
                 vk::PipelineStageFlags2 dst_stage_mask,
+                size_t frame_index,
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
             vk::raii::CommandPool m_command_pool = nullptr;
-            std::vector<vk::raii::CommandBuffer> m_command_buffers;
-            uint32_t m_frame_index = 0;
+            vk::raii::CommandBuffers m_command_buffers;
         };
     }
 }

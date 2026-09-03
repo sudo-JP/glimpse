@@ -19,7 +19,22 @@ namespace glimpse {
             void run();
             std::expected<void, std::string> draw_frame();
         private:
-            Renderer();
+            struct VulkanCore {
+                glimpse::renderer::VulkanContext vulkan_context;
+                glimpse::renderer::VulkanSwapchain swapchain;
+                glimpse::renderer::CommandRecorder command_recorder;
+                glimpse::renderer::GraphicsPipeline pipeline;
+            };
+            struct VulkanSyncPrimitives {
+                std::vector<vk::raii::Semaphore> present_complete_semaphores;
+                std::vector<vk::raii::Semaphore> render_finished_semaphores;
+                std::vector<vk::raii::Fence> in_flight_fences;
+            };
+            Renderer(
+                VulkanCore core,  
+                VulkanSyncPrimitives sync_primitives,
+                Window window
+            );
 
             void submit();
             void present(uint32_t image_idx);
@@ -28,11 +43,18 @@ namespace glimpse {
             glimpse::renderer::VulkanSwapchain m_swapchain;
             glimpse::renderer::CommandRecorder m_command_recorder;
             glimpse::renderer::GraphicsPipeline m_pipeline;
+
+            // Window
             Window m_window;
+
+            // Sync
             std::vector<vk::raii::Semaphore> m_present_complete_semaphores;
             std::vector<vk::raii::Semaphore> m_render_finished_semaphores;
-            std::vector<vk::raii::Fence> m_draw_fences;
-            uint32_t m_frame_index = 0; 
+            std::vector<vk::raii::Fence> m_in_flight_fences;
+
+            // Frame tracking
+            size_t m_frame_index = 0; 
+            static constexpr size_t m_max_frames_in_flight = 2;
         };
     }
 }

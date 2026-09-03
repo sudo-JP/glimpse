@@ -20,6 +20,10 @@ compile_slangs(${SLANG_FILES})
 
 add_executable(${PROJECT_NAME})
 
+target_compile_definitions(glimpse PRIVATE 
+    SHADER_DIR="${CMAKE_BINARY_DIR}/shaders"
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

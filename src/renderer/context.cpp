@@ -218,14 +218,10 @@ namespace glimpse::renderer {
                 vk::PhysicalDeviceVulkan13Features,
                 vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
             > feature_chain = {
-                // vk::PhysicalDeviceFeatures2
-                {}, 
-                // Enable shader draw params from 1.1
-                {true},
-                // Enable dynamic rendering from vk 1.3
-                {true},
-                // Enable extended dyanmic state from extension
-                {true},
+                vk::PhysicalDeviceFeatures2{}, 
+                vk::PhysicalDeviceVulkan11Features{}.setShaderDrawParameters(true),
+                vk::PhysicalDeviceVulkan13Features{}.setDynamicRendering(true),
+                vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT{}.setExtendedDynamicState(true)
             };
             std::vector<const char*> required_device_extension = {
                 vk::KHRSwapchainExtensionName
