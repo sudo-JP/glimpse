@@ -108,10 +108,9 @@ namespace glimpse::renderer {
 
         auto [result, image_idx] = m_swapchain.acquire_next_image(m_present_complete_semaphores[m_frame_index]);
         if (result == vk::Result::eErrorOutOfDateKHR
-        || result == vk::Result::eSuboptimalKHR
-        || m_frame_buffer_resized) {
-            m_frame_buffer_resized = false;
-            m_swapchain.recreate_swapchain(m_vulkan_context);
+        || result == vk::Result::eSuboptimalKHR) {
+            auto swapchain_res = m_swapchain.recreate_swapchain(m_vulkan_context, m_window);
+            if (!swapchain_res) return std::unexpected(std::move(swapchain_res).error());
             return {};
         } 
         if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
@@ -132,7 +131,8 @@ namespace glimpse::renderer {
         if (!err) return std::unexpected(std::move(err).error());
 
         submit();
-        present(image_idx);
+        auto present_res = present(image_idx);
+        if (!present_res) return std::unexpected(std::move(present_res).error());
 
         m_frame_index = (m_frame_index + 1) % m_max_frames_in_flight;
         return {};
@@ -154,7 +154,7 @@ namespace glimpse::renderer {
         queue.submit(submit_info, *m_in_flight_fences[m_frame_index]);
     }
 
-    void Renderer::present(uint32_t image_idx) {
+    std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
         const auto& swapchain = m_swapchain.get_swapchain();
         const auto present_info_khr = vk::PresentInfoKHR() 
             .setWaitSemaphoreCount(1)
@@ -169,10 +169,12 @@ namespace glimpse::renderer {
 
         if ((result == vk::Result::eSuboptimalKHR) 
         || (result == vk::Result::eErrorOutOfDateKHR)) {
-            m_swapchain.recreate_swapchain(m_vulkan_context);
+            auto swapchain_res = m_swapchain.recreate_swapchain(m_vulkan_context, m_window);
+            if (!swapchain_res) return std::unexpected(std::move(swapchain_res).error());
         } else {
             assert(result == vk::Result::eSuccess);
         }
+        return {};
     }
 
     Renderer::Renderer(

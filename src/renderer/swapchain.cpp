@@ -214,6 +214,15 @@ namespace glimpse::renderer {
         const glimpse::renderer::VulkanContext& context, 
         const glimpse::Window& window
     ) {
+        int width = 0, height = 0;
+        const auto& win = window.get_window();
+        glfwGetFramebufferSize(win, &width, &height);
+        while ((width == 0 || height == 0) && !glfwWindowShouldClose(win)) {
+            glfwGetFramebufferSize(win, &width, &height);
+            glfwWaitEvents();
+        }
+        if (glfwWindowShouldClose(win)) return {};
+
         const auto& device = context.get_device();
         device.waitIdle();
 
@@ -229,12 +238,12 @@ namespace glimpse::renderer {
             swapchain, 
             swapchain_images
         ] = std::move(resources);
+
+        auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
         m_swapchain_extent = std::move(swapchain_extent);
         m_swapchain_surface_format = std::move(swapchain_surface_format);
         m_swapchain = std::move(swapchain);
         m_swapchain_images = std::move(swapchain_images);
-
-        auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
         m_swapchain_image_views = std::move(image_views);
 
         return {};
