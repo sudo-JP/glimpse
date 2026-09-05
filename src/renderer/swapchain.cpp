@@ -105,51 +105,85 @@ namespace glimpse::renderer {
 
             return swapchain_image_views;
         }
-    }
+
+        struct SwapchainResources {
+            vk::Extent2D swapchain_extent;
+            vk::SurfaceFormatKHR swapchain_surface_format;
+            vk::raii::SwapchainKHR swapchain = nullptr;
+            std::vector<vk::Image> swapchain_images;
+        };
+
+        std::expected<SwapchainResources, std::string> create_swapchain(
+            const renderer::VulkanContext& context,
+            const glimpse::Window& window
+        ) {
+            const auto& physical_device = context.get_physical_device();
+            const auto& surface = context.get_surface();
+
+            // Get from physical device
+            auto available_formats = physical_device.getSurfaceFormatsKHR(*surface);
+            auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
+            auto available_presentation_modes = physical_device.getSurfacePresentModesKHR(*surface);
+
+            // Choosing
+            auto swapchain_extent = choose_swap_extent(surface_capabilities, window);
+            auto min_image_count = choose_swap_min_image_count(surface_capabilities);
+
+            // Err handlings 
+            auto swapchain_surface_format_res = choose_swap_surface_format(available_formats);
+            if (!swapchain_surface_format_res) return std::unexpected(std::move(swapchain_surface_format_res).error());
+            auto swapchain_surface_format = std::move(swapchain_surface_format_res).value();
+
+            auto swapchain_present_mode_res = choose_swap_presentation_mode(available_presentation_modes);
+            if (!swapchain_present_mode_res) return std::unexpected(std::move(swapchain_present_mode_res).error());
+            auto swapchain_present_mode = std::move(swapchain_present_mode_res).value();
+
+            auto swapchain_create_info = vk::SwapchainCreateInfoKHR()
+                .setSurface(*surface)
+                .setMinImageCount(min_image_count)
+                .setImageFormat(swapchain_surface_format.format)
+                .setImageColorSpace(swapchain_surface_format.colorSpace)
+                .setImageExtent(swapchain_extent)
+                .setImageArrayLayers(1)
+                .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+                .setImageSharingMode(vk::SharingMode::eExclusive)
+                .setPreTransform(surface_capabilities.currentTransform)
+                .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+                .setPresentMode(swapchain_present_mode)
+                .setClipped(true);
+
+            const auto& device = context.get_device();
+            auto swapchain = vk::raii::SwapchainKHR(device, swapchain_create_info);
+            const auto swapchain_images = swapchain.getImages();
+
+            SwapchainResources resources {
+                std::move(swapchain_extent),
+                std::move(swapchain_surface_format),
+                std::move(swapchain),
+                std::move(swapchain_images)
+            };
+            return resources;
+        }
+
+    } // End helper namespace
 
     std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
         const renderer::VulkanContext& context,
         const glimpse::Window& window
     ) {
-        auto physical_device = context.get_physical_device();
-        const auto& surface = context.get_surface();
+        auto creation_res = create_swapchain(context, window);
+        if (!creation_res) return std::unexpected(std::move(creation_res).error());
+        auto resources = std::move(creation_res).value();
 
-        // Get from physical device
-        auto available_formats = physical_device.getSurfaceFormatsKHR(*surface);
-        auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-        auto available_presentation_modes = physical_device.getSurfacePresentModesKHR(*surface);
-
-        // Choosing
-        auto swapchain_extent = choose_swap_extent(surface_capabilities, window);
-        auto min_image_count = choose_swap_min_image_count(surface_capabilities);
-
-        // Err handlings 
-        auto swapchain_surface_format_res = choose_swap_surface_format(available_formats);
-        if (!swapchain_surface_format_res) return std::unexpected(std::move(swapchain_surface_format_res).error());
-        auto swapchain_surface_format = std::move(swapchain_surface_format_res).value();
-
-        auto swapchain_present_mode_res = choose_swap_presentation_mode(available_presentation_modes);
-        if (!swapchain_present_mode_res) return std::unexpected(std::move(swapchain_present_mode_res).error());
-        auto swapchain_present_mode = std::move(swapchain_present_mode_res).value();
-
-        auto swapchain_create_info = vk::SwapchainCreateInfoKHR()
-            .setSurface(*surface)
-            .setMinImageCount(min_image_count)
-            .setImageFormat(swapchain_surface_format.format)
-            .setImageColorSpace(swapchain_surface_format.colorSpace)
-            .setImageExtent(swapchain_extent)
-            .setImageArrayLayers(1)
-            .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
-            .setImageSharingMode(vk::SharingMode::eExclusive)
-            .setPreTransform(surface_capabilities.currentTransform)
-            .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-            .setPresentMode(swapchain_present_mode)
-            .setClipped(true);
+        // all hail destructuring, this is pretty cool
+        auto&& [
+            swapchain_extent, 
+            swapchain_surface_format, 
+            swapchain, 
+            swapchain_images
+        ] = std::move(resources);
 
         const auto& device = context.get_device();
-        auto swapchain = vk::raii::SwapchainKHR(device, swapchain_create_info);
-        const auto swapchain_images = swapchain.getImages();
-
         auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
 
         return VulkanSwapchain(
@@ -175,6 +209,43 @@ namespace glimpse::renderer {
     m_swapchain_image_views(std::move(swapchain_image_views))
     {}
 
+
+    std::expected<void, std::string> VulkanSwapchain::recreate_swapchain(
+        const glimpse::renderer::VulkanContext& context, 
+        const glimpse::Window& window
+    ) {
+        const auto& device = context.get_device();
+        device.waitIdle();
+
+        cleanup_swapchain();
+
+        auto creation_res = create_swapchain(context, window);
+        if (!creation_res) return std::unexpected(std::move(creation_res).error());
+        auto resources = std::move(creation_res).value();
+
+        auto&& [
+            swapchain_extent, 
+            swapchain_surface_format, 
+            swapchain, 
+            swapchain_images
+        ] = std::move(resources);
+        m_swapchain_extent = std::move(swapchain_extent);
+        m_swapchain_surface_format = std::move(swapchain_surface_format);
+        m_swapchain = std::move(swapchain);
+        m_swapchain_images = std::move(swapchain_images);
+
+        auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
+        m_swapchain_image_views = std::move(image_views);
+
+        return {};
+    }
+
+    void VulkanSwapchain::cleanup_swapchain() {
+        m_swapchain_image_views.clear();
+        m_swapchain = nullptr;
+    }
+
+    // Getters
     vk::ResultValue<uint32_t> VulkanSwapchain::acquire_next_image(const vk::raii::Semaphore& semaphore) {
         return m_swapchain.acquireNextImage(UINT64_MAX, *semaphore, nullptr);
     }
@@ -206,4 +277,6 @@ namespace glimpse::renderer {
     const std::vector<vk::Image>& VulkanSwapchain::get_swapchain_images() const {
         return m_swapchain_images;
     }
+
+    VulkanSwapchain::~VulkanSwapchain() { cleanup_swapchain(); }
 }

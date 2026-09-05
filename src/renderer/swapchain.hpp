@@ -7,6 +7,7 @@
 
 namespace glimpse {
     namespace renderer {
+        
         class VulkanSwapchain {
         public:
             static std::expected<VulkanSwapchain, std::string> new_vk_swapchain(
@@ -14,7 +15,20 @@ namespace glimpse {
                 const glimpse::Window& window
             );
 
+            ~VulkanSwapchain(); 
+
+            VulkanSwapchain(VulkanSwapchain&& other) noexcept = default;
+            VulkanSwapchain& operator=(VulkanSwapchain&& other) noexcept = default; 
+
+            VulkanSwapchain(const VulkanSwapchain&) = delete;
+            VulkanSwapchain& operator=(const VulkanSwapchain&) = delete;
+
             vk::ResultValue<uint32_t> acquire_next_image(const vk::raii::Semaphore& semaphore);
+
+            std::expected<void, std::string> recreate_swapchain(
+                const glimpse::renderer::VulkanContext& context, 
+                const glimpse::Window& window
+            );
 
             // getters
             const vk::Extent2D get_extent() const;
@@ -32,6 +46,8 @@ namespace glimpse {
                 vk::Extent2D swapchain_extent,
                 std::vector<vk::raii::ImageView> swapchain_image_views
             );
+            void cleanup_swapchain();
+
             vk::raii::SwapchainKHR m_swapchain = nullptr;
             std::vector<vk::Image> m_swapchain_images;
             vk::SurfaceFormatKHR m_swapchain_surface_format;

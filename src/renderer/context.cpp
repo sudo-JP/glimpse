@@ -299,7 +299,6 @@ namespace glimpse::renderer {
             if (!physical_device_result) return std::unexpected(std::move(physical_device_result).error());
 
             phys_device = std::move(physical_device_result).value();
-            std::println("Selected GPU: {}", phys_device.getProperties().deviceName.data());
 
             auto device_result = create_logical_device(phys_device, surface);
             if (!device_result) return std::unexpected(std::move(device_result).error());

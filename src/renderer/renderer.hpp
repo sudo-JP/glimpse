@@ -55,6 +55,7 @@ namespace glimpse {
             // Frame tracking
             size_t m_frame_index = 0; 
             static constexpr size_t m_max_frames_in_flight = 2;
+            bool m_frame_buffer_resized = false;
         };
     }
 }

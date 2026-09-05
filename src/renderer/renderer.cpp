@@ -3,6 +3,7 @@
 #include "renderer/graphics_pipeline.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <vulkan/vulkan.hpp>
@@ -28,7 +29,7 @@ namespace glimpse::renderer {
         };
 
         auto vk_ctx_res = glimpse::renderer::VulkanContext::new_vk_context(
-            app_info, engine_ctx, window, true
+            app_info, engine_ctx, window, false
         );
         if (!vk_ctx_res) {
             return std::unexpected(std::move(vk_ctx_res).error()); 
@@ -104,9 +105,22 @@ namespace glimpse::renderer {
             *m_in_flight_fences[m_frame_index], vk::True, UINT64_MAX
         );
         if (fence_res != vk::Result::eSuccess) return std::unexpected("failed to wait for fence");
-        device.resetFences(*m_in_flight_fences[m_frame_index]);
 
         auto [result, image_idx] = m_swapchain.acquire_next_image(m_present_complete_semaphores[m_frame_index]);
+        if (result == vk::Result::eErrorOutOfDateKHR
+        || result == vk::Result::eSuboptimalKHR
+        || m_frame_buffer_resized) {
+            m_frame_buffer_resized = false;
+            m_swapchain.recreate_swapchain(m_vulkan_context);
+            return {};
+        } 
+        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+            if (result == vk::Result::eTimeout || result == vk::Result::eNotReady) {
+                return std::unexpected("failed to acquire swap chain image");
+            }
+        }
+
+        device.resetFences(*m_in_flight_fences[m_frame_index]);
 
         m_command_recorder.reset_command_buffer(m_frame_index);
         auto err = m_command_recorder.record_command_buffer(
@@ -148,9 +162,17 @@ namespace glimpse::renderer {
             .setSwapchainCount(1)
             .setPSwapchains(&*swapchain)
             .setPImageIndices(&image_idx);
+
         
         const auto& queue = m_vulkan_context.get_queue();
-        auto res = queue.presentKHR(present_info_khr);
+        auto result = queue.presentKHR(present_info_khr);
+
+        if ((result == vk::Result::eSuboptimalKHR) 
+        || (result == vk::Result::eErrorOutOfDateKHR)) {
+            m_swapchain.recreate_swapchain(m_vulkan_context);
+        } else {
+            assert(result == vk::Result::eSuccess);
+        }
     }
 
     Renderer::Renderer(
