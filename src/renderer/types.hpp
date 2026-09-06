@@ -4,13 +4,13 @@
 #include <glm/glm.hpp>
 
 namespace glimpse {
-    namespace types {
+    namespace renderer {
         struct VulkanVertex {
             glm::vec2 pos; 
             glm::vec3 color;
 
-            static vk::VertexInputBindingDescription get_binding_descriptor();
-            static std::array<vk::VertexInputAttributeDescription, 2> get_attributee_descriptions();
+            static vk::VertexInputBindingDescription get_binding_description();
+            static std::array<vk::VertexInputAttributeDescription, 2> get_attribute_descriptions();
         };
     }
 }

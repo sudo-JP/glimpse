@@ -1,15 +1,15 @@
 #include "types.hpp"
 #include <cstddef>
 
-namespace glimpse::types {
-    vk::VertexInputBindingDescription VulkanVertex::get_binding_descriptor() {
+namespace glimpse::renderer {
+    vk::VertexInputBindingDescription VulkanVertex::get_binding_description() {
         return vk::VertexInputBindingDescription()
             .setBinding(0)
             .setStride(sizeof(VulkanVertex))
             .setInputRate(vk::VertexInputRate::eVertex);
     } 
 
-    std::array<vk::VertexInputAttributeDescription, 2> VulkanVertex::get_attributee_descriptions() {
+    std::array<vk::VertexInputAttributeDescription, 2> VulkanVertex::get_attribute_descriptions() {
         auto pos = vk::VertexInputAttributeDescription()
             .setLocation(0)
             .setBinding(0)

@@ -1,5 +1,6 @@
 #include "graphics_pipeline.hpp"
 #include "vulkan/vulkan.hpp"
+#include "types.hpp"
 #include <fstream>
 
 namespace glimpse::renderer {
@@ -62,7 +63,14 @@ namespace glimpse::renderer {
             fragment_shader_create_info
         };
 
-        vk::PipelineVertexInputStateCreateInfo vertex_input_info;
+        auto vertex = glimpse::renderer::VulkanVertex();
+        auto binding_description = vertex.get_binding_description();
+        auto attribute_descriptions = vertex.get_attribute_descriptions();
+        auto vertex_input_info = vk::PipelineVertexInputStateCreateInfo()
+            .setVertexBindingDescriptionCount(1)
+            .setPVertexBindingDescriptions(&binding_description)
+            .setVertexAttributeDescriptionCount(static_cast<uint32_t>(attribute_descriptions.size()))
+            .setPVertexAttributeDescriptions(attribute_descriptions.data());
 
         // Fixed functions set up
         auto input_assembly = vk::PipelineInputAssemblyStateCreateInfo()

@@ -5,4 +5,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     command_recorder.cpp
     renderer.cpp
     vertex.cpp
+    mesh.cpp
 )
