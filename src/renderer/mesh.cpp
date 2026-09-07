@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <expected>
 #include <string>
@@ -49,6 +50,33 @@ namespace glimpse::renderer {
             .setAllocationSize(memory_requirements.size)
             .setMemoryTypeIndex(memory_type_index);
 
-        return Mesh();
+        auto vertex_buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
+
+        // Filling the vertex buffer 
+        auto offset = 0;
+        vertex_buffer.bindMemory(*vertex_buffer_memory, offset);
+        auto data = static_cast<glimpse::renderer::VulkanVertex *>(vertex_buffer_memory.mapMemory(offset, buffer_info.size));
+        std::copy(vertices.begin(), vertices.end(), data);
+        vertex_buffer_memory.unmapMemory();
+
+        return Mesh(
+            static_cast<uint32_t>(vertices.size()),
+            std::move(vertex_buffer),
+            std::move(vertex_buffer_memory)
+        );
     }
+
+    Mesh::Mesh(
+        uint32_t size,
+        vk::raii::Buffer vertex_buffer,
+        vk::raii::DeviceMemory vertex_buffer_memory
+    ) : m_size(size),
+    m_vertex_buffer(std::move(vertex_buffer)),
+    m_vertex_buffer_memory(std::move(vertex_buffer_memory)) {}
+
+    const vk::raii::Buffer& Mesh::get_vertex_buffer() const {
+        return m_vertex_buffer;
+    }
+
+    uint32_t Mesh::get_size() const { return m_size; }
 }

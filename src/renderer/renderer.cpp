@@ -1,6 +1,8 @@
 #include "renderer.hpp"
 #include "renderer/context.hpp"
 #include "renderer/graphics_pipeline.hpp"
+#include "renderer/mesh.hpp"
+#include "renderer/types.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -8,6 +10,7 @@
 #include <cstdlib>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
+
 
 namespace glimpse::renderer {
     
@@ -122,11 +125,23 @@ namespace glimpse::renderer {
         device.resetFences(*m_in_flight_fences[m_frame_index]);
 
         m_command_recorder.reset_command_buffer(m_frame_index);
+
+        // TODO: Let's....not put it here
+        const std::vector<VulkanVertex> vertices = {
+            {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        auto mesh_res = Mesh::new_mesh(vertices, m_vulkan_context);
+        if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
+        const auto mesh = std::move(mesh_res).value();
+
         auto err = m_command_recorder.record_command_buffer(
             image_idx, 
             m_frame_index,
             m_swapchain, 
-            m_pipeline   
+            m_pipeline,
+            mesh
         );
         if (!err) return std::unexpected(std::move(err).error());
 

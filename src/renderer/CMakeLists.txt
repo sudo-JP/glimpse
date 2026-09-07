@@ -4,6 +4,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     graphics_pipeline.cpp
     command_recorder.cpp
     renderer.cpp
-    vertex.cpp
+    types.cpp
     mesh.cpp
 )

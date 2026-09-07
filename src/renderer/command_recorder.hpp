@@ -2,6 +2,7 @@
 
 #include "renderer/context.hpp"
 #include "renderer/graphics_pipeline.hpp"
+#include "renderer/mesh.hpp"
 #include "renderer/swapchain.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -20,7 +21,8 @@ namespace glimpse {
                 uint32_t image_index,
                 size_t frame_index,
                 const glimpse::renderer::VulkanSwapchain& swapchain,
-                const glimpse::renderer::GraphicsPipeline& pipeline
+                const glimpse::renderer::GraphicsPipeline& pipeline,
+                const glimpse::renderer::Mesh& mesh
             );
 
             void reset_command_buffer(size_t index);

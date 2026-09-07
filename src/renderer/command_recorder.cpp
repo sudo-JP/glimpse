@@ -1,5 +1,6 @@
 #include "command_recorder.hpp"
 #include "renderer/graphics_pipeline.hpp"
+#include "renderer/mesh.hpp"
 #include "renderer/swapchain.hpp"
 #include "vulkan/vulkan.hpp"
 #include <cstdint>
@@ -80,8 +81,10 @@ namespace glimpse::renderer {
         uint32_t image_index,
         size_t frame_index,
         const glimpse::renderer::VulkanSwapchain& swapchain,
-        const glimpse::renderer::GraphicsPipeline& pipeline
+        const glimpse::renderer::GraphicsPipeline& pipeline, 
+        const glimpse::renderer::Mesh& mesh
     ) {
+        // Start command buffer, after select the current command buffer index
         const auto& command_buffer = m_command_buffers[frame_index];
         command_buffer.begin({});
         auto transition_res = transition_image_layout(
@@ -131,6 +134,10 @@ namespace glimpse::renderer {
         const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
+        const auto& vertex_buffer = mesh.get_vertex_buffer();
+        // TODO: add offset to mesh, currently hard code 0 
+        command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
+        command_buffer.draw(mesh.get_size(), 1, 0, 0);
         command_buffer.setViewport(
             0, 
             vk::Viewport(
