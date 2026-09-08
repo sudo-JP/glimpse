@@ -34,6 +34,7 @@ namespace glimpse::renderer {
         }
     } // end helper namespace
 
+    // Constructor
     std::expected<GraphicsPipeline, std::string> GraphicsPipeline::new_graphics_pipeline(
         const ShaderStageConfig& shader_config, 
         const glimpse::renderer::VulkanContext& context,

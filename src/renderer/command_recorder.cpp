@@ -7,31 +7,21 @@
 #include <expected>
 
 namespace glimpse::renderer {
-    CommandRecorder CommandRecorder::new_command_recorder(
-        const VulkanContext& context,
-        size_t max_frames_in_flight
-    ) {
-        const uint32_t graphics_queue_index = context.get_graphics_queue_index();
-
-        auto pool_info = vk::CommandPoolCreateInfo()
+    // Constructor
+    CommandRecorder::CommandRecorder(
+    const VulkanContext& context,
+    size_t max_frames_in_flight
+    ) : 
+        m_command_pool(context.get_device(), vk::CommandPoolCreateInfo()
             .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
-            .setQueueFamilyIndex(graphics_queue_index);
+            .setQueueFamilyIndex(context.get_graphics_queue_index())),
 
-        auto const& device = context.get_device();
-        auto command_pool = vk::raii::CommandPool(device, pool_info);
-
-        auto alloc_info = vk::CommandBufferAllocateInfo()
-            .setCommandPool(command_pool)
+        m_command_buffers(context.get_device(), vk::CommandBufferAllocateInfo()
+            .setCommandPool(m_command_pool)
             .setLevel(vk::CommandBufferLevel::ePrimary)
-            .setCommandBufferCount(max_frames_in_flight);
+            .setCommandBufferCount(max_frames_in_flight)) 
+    {}
 
-        auto command_buffer = vk::raii::CommandBuffers(device, alloc_info);
-
-        return CommandRecorder(
-            std::move(command_pool),
-            std::move(command_buffer)
-        );
-    }
 
     std::expected<void, std::string> CommandRecorder::transition_image_layout(
         uint32_t image_index,
@@ -190,10 +180,4 @@ namespace glimpse::renderer {
         m_command_buffers[index].reset();
     }
 
-    CommandRecorder::CommandRecorder(
-        vk::raii::CommandPool command_pool,
-        vk::raii::CommandBuffers command_buffers
-    ): m_command_pool(std::move(command_pool)),
-    m_command_buffers(std::move(command_buffers)) 
-    {}
 }

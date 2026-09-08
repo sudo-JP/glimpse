@@ -1,6 +1,7 @@
 #pragma once
 #include "renderer/context.hpp"
 #include <expected>
+#include <functional>
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 #include "window/window.hpp"
@@ -26,7 +27,6 @@ namespace glimpse {
             vk::ResultValue<uint32_t> acquire_next_image(const vk::raii::Semaphore& semaphore);
 
             std::expected<void, std::string> recreate_swapchain(
-                const glimpse::renderer::VulkanContext& context, 
                 const glimpse::Window& window
             );
 
@@ -40,6 +40,7 @@ namespace glimpse {
             
         private: 
             VulkanSwapchain(
+                const glimpse::renderer::VulkanContext& context,
                 vk::raii::SwapchainKHR swapchain,
                 std::vector<vk::Image> swapchain_images,
                 vk::SurfaceFormatKHR swapchain_surface_format,
@@ -53,6 +54,7 @@ namespace glimpse {
             vk::SurfaceFormatKHR m_swapchain_surface_format;
             vk::Extent2D m_swapchain_extent;
             std::vector<vk::raii::ImageView> m_swapchain_image_views; 
+            std::reference_wrapper<const VulkanContext> m_vk_ctx;
         };
     }
 }

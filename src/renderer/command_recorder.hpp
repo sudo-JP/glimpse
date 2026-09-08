@@ -12,11 +12,10 @@ namespace glimpse {
     namespace renderer {
         class CommandRecorder {
         public:
-            static CommandRecorder new_command_recorder(
+            CommandRecorder(
                 const VulkanContext& context,
                 size_t max_frames_in_flight
             );
-
             std::expected<void, std::string> record_command_buffer(
                 uint32_t image_index,
                 size_t frame_index,
@@ -29,10 +28,6 @@ namespace glimpse {
             // getters
             const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
         private:
-            CommandRecorder(
-                vk::raii::CommandPool command_pool,
-                vk::raii::CommandBuffers command_buffers
-            );
             std::expected<void, std::string> transition_image_layout(
                 uint32_t image_index,
                 vk::ImageLayout old_layout,

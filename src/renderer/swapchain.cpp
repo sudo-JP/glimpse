@@ -187,6 +187,7 @@ namespace glimpse::renderer {
         auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
 
         return VulkanSwapchain(
+            context,
             std::move(swapchain),
             std::move(swapchain_images),
             std::move(swapchain_surface_format),
@@ -197,12 +198,14 @@ namespace glimpse::renderer {
 
 
     VulkanSwapchain::VulkanSwapchain(
+        const glimpse::renderer::VulkanContext& context,
         vk::raii::SwapchainKHR swapchain,
         std::vector<vk::Image> swapchain_images,
         vk::SurfaceFormatKHR swapchain_surface_format,
         vk::Extent2D swapchain_extent,
         std::vector<vk::raii::ImageView> swapchain_image_views
-    ) : m_swapchain(std::move(swapchain)), 
+    ) : m_vk_ctx(context),
+    m_swapchain(std::move(swapchain)), 
     m_swapchain_images(std::move(swapchain_images)),
     m_swapchain_surface_format(std::move(swapchain_surface_format)),
     m_swapchain_extent(std::move(swapchain_extent)),
@@ -211,7 +214,6 @@ namespace glimpse::renderer {
 
 
     std::expected<void, std::string> VulkanSwapchain::recreate_swapchain(
-        const glimpse::renderer::VulkanContext& context, 
         const glimpse::Window& window
     ) {
         int width = 0, height = 0;
@@ -223,6 +225,7 @@ namespace glimpse::renderer {
         }
         if (glfwWindowShouldClose(win)) return {};
 
+        const auto& context = m_vk_ctx.get();
         const auto& device = context.get_device();
         device.waitIdle();
 

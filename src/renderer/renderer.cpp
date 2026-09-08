@@ -42,7 +42,7 @@ namespace glimpse::renderer {
 
         const auto& device = vk_ctx.get_device();
 
-        auto command_recorder = CommandRecorder::new_command_recorder(vk_ctx, m_max_frames_in_flight);
+        auto command_recorder = CommandRecorder(vk_ctx, m_max_frames_in_flight);
         std::vector<vk::raii::Semaphore> render_finished_semaphores;
         std::vector<vk::raii::Semaphore> present_complete_semaphores;
         std::vector<vk::raii::Fence> in_flight_fences;
@@ -112,7 +112,7 @@ namespace glimpse::renderer {
         auto [result, image_idx] = m_swapchain.acquire_next_image(m_present_complete_semaphores[m_frame_index]);
         if (result == vk::Result::eErrorOutOfDateKHR
         || result == vk::Result::eSuboptimalKHR) {
-            auto swapchain_res = m_swapchain.recreate_swapchain(m_vulkan_context, m_window);
+            auto swapchain_res = m_swapchain.recreate_swapchain(m_window);
             if (!swapchain_res) return std::unexpected(std::move(swapchain_res).error());
             return {};
         } 
@@ -184,7 +184,7 @@ namespace glimpse::renderer {
 
         if ((result == vk::Result::eSuboptimalKHR) 
         || (result == vk::Result::eErrorOutOfDateKHR)) {
-            auto swapchain_res = m_swapchain.recreate_swapchain(m_vulkan_context, m_window);
+            auto swapchain_res = m_swapchain.recreate_swapchain(m_window);
             if (!swapchain_res) return std::unexpected(std::move(swapchain_res).error());
         } else {
             assert(result == vk::Result::eSuccess);
