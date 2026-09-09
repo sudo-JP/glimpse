@@ -2,7 +2,6 @@
 
 #include "renderer/context.hpp"
 #include "renderer/graphics_pipeline.hpp"
-#include "renderer/mesh.hpp"
 #include "renderer/swapchain.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -10,6 +9,9 @@
 
 namespace glimpse {
     namespace renderer {
+        // Forward decl cuz apparently wont compile
+        class Mesh;
+
         class CommandRecorder {
         public:
             CommandRecorder(
@@ -25,8 +27,15 @@ namespace glimpse {
             );
 
             void reset_command_buffer(size_t index);
+            void copy_and_submit_immediate(
+                vk::raii::Buffer& src_buffer, 
+                vk::raii::Buffer& dst_buffer, 
+                vk::DeviceSize size
+            ) const;
+
             // getters
             const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
+            const vk::raii::CommandPool& get_command_pool() const;
         private:
             std::expected<void, std::string> transition_image_layout(
                 uint32_t image_index,
@@ -39,6 +48,7 @@ namespace glimpse {
                 size_t frame_index,
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
+            std::reference_wrapper<const glimpse::renderer::VulkanContext> m_vk_ctx;
             vk::raii::CommandPool m_command_pool = nullptr;
             vk::raii::CommandBuffers m_command_buffers;
         };

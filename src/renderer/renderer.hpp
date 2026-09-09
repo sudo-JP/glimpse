@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <memory>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
@@ -20,7 +21,7 @@ namespace glimpse {
             std::expected<void, std::string> draw_frame();
         private:
             struct VulkanCore {
-                glimpse::renderer::VulkanContext vulkan_context;
+                std::unique_ptr<glimpse::renderer::VulkanContext> vulkan_context;
                 glimpse::renderer::VulkanSwapchain swapchain;
                 glimpse::renderer::CommandRecorder command_recorder;
                 glimpse::renderer::GraphicsPipeline pipeline;
@@ -39,7 +40,7 @@ namespace glimpse {
             void submit();
             std::expected<void, std::string> present(uint32_t image_idx);
 
-            glimpse::renderer::VulkanContext m_vulkan_context;
+            std::unique_ptr<glimpse::renderer::VulkanContext> m_vulkan_context;
             glimpse::renderer::VulkanSwapchain m_swapchain;
             glimpse::renderer::CommandRecorder m_command_recorder;
             glimpse::renderer::GraphicsPipeline m_pipeline;

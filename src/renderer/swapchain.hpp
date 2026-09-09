@@ -49,12 +49,12 @@ namespace glimpse {
             );
             void cleanup_swapchain();
 
+            std::reference_wrapper<const glimpse::renderer::VulkanContext> m_vk_ctx;
             vk::raii::SwapchainKHR m_swapchain = nullptr;
             std::vector<vk::Image> m_swapchain_images;
             vk::SurfaceFormatKHR m_swapchain_surface_format;
             vk::Extent2D m_swapchain_extent;
             std::vector<vk::raii::ImageView> m_swapchain_image_views; 
-            std::reference_wrapper<const VulkanContext> m_vk_ctx;
         };
     }
 }

@@ -19,7 +19,8 @@ namespace glimpse::renderer {
         m_command_buffers(context.get_device(), vk::CommandBufferAllocateInfo()
             .setCommandPool(m_command_pool)
             .setLevel(vk::CommandBufferLevel::ePrimary)
-            .setCommandBufferCount(max_frames_in_flight)) 
+            .setCommandBufferCount(max_frames_in_flight)),
+        m_vk_ctx(context)
     {}
 
 
@@ -171,6 +172,38 @@ namespace glimpse::renderer {
         return {};
     }
 
+    void CommandRecorder::copy_and_submit_immediate(
+        vk::raii::Buffer& src_buffer, 
+        vk::raii::Buffer& dst_buffer, 
+        vk::DeviceSize size
+    ) const {
+        uint32_t buffer_count = 1;
+
+        auto alloc_info = vk::CommandBufferAllocateInfo()
+            .setCommandPool(m_command_pool)
+            .setLevel(vk::CommandBufferLevel::ePrimary)
+            .setCommandBufferCount(buffer_count);
+
+        const auto& context = m_vk_ctx.get();
+        const auto& device = context.get_device();
+        auto command_copy_buffer = std::move(device.allocateCommandBuffers(alloc_info).front());
+
+        // Buffer 
+        command_copy_buffer.begin({
+            vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+        });
+        command_copy_buffer.copyBuffer(*src_buffer, *dst_buffer, vk::BufferCopy(0, 0, size));
+        command_copy_buffer.end();
+
+        // Send
+        const auto& queue = context.get_queue();
+        const auto submit_info = vk::SubmitInfo()
+            .setCommandBufferCount(buffer_count)
+            .setPCommandBuffers(&*command_copy_buffer);
+        queue.submit(submit_info, nullptr);
+        queue.waitIdle();
+    }
+
 
     const vk::raii::CommandBuffer& CommandRecorder::get_command_buffer(size_t index) const {
         return m_command_buffers[index];
@@ -180,4 +213,7 @@ namespace glimpse::renderer {
         m_command_buffers[index].reset();
     }
 
+    const vk::raii::CommandPool& CommandRecorder::get_command_pool() const {
+        return m_command_pool;
+    }
 }

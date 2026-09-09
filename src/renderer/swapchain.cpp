@@ -114,7 +114,7 @@ namespace glimpse::renderer {
         };
 
         std::expected<SwapchainResources, std::string> create_swapchain(
-            const renderer::VulkanContext& context,
+            const glimpse::renderer::VulkanContext& context,
             const glimpse::Window& window
         ) {
             const auto& physical_device = context.get_physical_device();
@@ -168,7 +168,7 @@ namespace glimpse::renderer {
     } // End helper namespace
 
     std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
-        const renderer::VulkanContext& context,
+        const glimpse::renderer::VulkanContext& context,
         const glimpse::Window& window
     ) {
         auto creation_res = create_swapchain(context, window);

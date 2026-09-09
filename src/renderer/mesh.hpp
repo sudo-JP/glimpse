@@ -7,13 +7,16 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
+
 namespace glimpse {
     namespace renderer {
+        class CommandRecorder;
         class Mesh {
         public:
             static std::expected<Mesh, std::string> new_mesh(
                 const std::vector<glimpse::renderer::VulkanVertex>& vertices,
-                const glimpse::renderer::VulkanContext& context
+                const glimpse::renderer::VulkanContext& context,
+                const glimpse::renderer::CommandRecorder& recorder
             );
 
             // getters

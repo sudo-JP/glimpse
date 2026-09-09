@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "renderer/command_recorder.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <expected>
@@ -58,7 +59,7 @@ namespace glimpse::renderer {
             auto vertex_buffer_memory = vk::raii::DeviceMemory(device, memory_allocate_info);
 
             // Filling the vertex buffer 
-            auto offset = 0;
+            auto offset = vk::DeviceSize{0};
             vertex_buffer.bindMemory(*vertex_buffer_memory, offset);
             
             return std::pair{
@@ -67,14 +68,12 @@ namespace glimpse::renderer {
             };
         }
 
-        void copy_buffer(vk::raii::Buffer& src_buffer, vk::raii::Buffer& dst_buffer, vk::DeviceSize size) {
-            // TODO
-        }
     } // End helper namespace
      
     std::expected<Mesh, std::string> Mesh::new_mesh(
         const std::vector<glimpse::renderer::VulkanVertex>& vertices,
-        const glimpse::renderer::VulkanContext& context
+        const glimpse::renderer::VulkanContext& context,
+        const glimpse::renderer::CommandRecorder& recorder
     ) {
         vk::DeviceSize buffer_size = sizeof(std::remove_cvref_t<decltype(vertices)>::value_type) * vertices.size();
         
@@ -88,7 +87,7 @@ namespace glimpse::renderer {
         auto [staging_buffer, staging_buffer_memory] = std::move(staging_buffer_res).value();
 
 
-        auto offset = 0;
+        auto offset = vk::DeviceSize{0};
         auto data_staging = static_cast<glimpse::renderer::VulkanVertex *>(staging_buffer_memory.mapMemory(offset, buffer_size));
         std::copy(vertices.begin(), vertices.end(), data_staging);
         staging_buffer_memory.unmapMemory();
@@ -101,6 +100,8 @@ namespace glimpse::renderer {
         );
         if (!buffer_res) return std::unexpected(std::move(buffer_res).error());
         auto [vertex_buffer, vertex_buffer_memory] = std::move(buffer_res).value();
+
+        recorder.copy_and_submit_immediate(staging_buffer, vertex_buffer, buffer_size);
 
         return Mesh(
             static_cast<uint32_t>(vertices.size()),

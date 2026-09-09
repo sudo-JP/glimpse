@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -38,8 +39,11 @@ namespace glimpse::renderer {
             return std::unexpected(std::move(vk_ctx_res).error()); 
         }
 
-        auto vk_ctx = std::move(vk_ctx_res).value();
+        auto context = std::make_unique<glimpse::renderer::VulkanContext>(
+            std::move(vk_ctx_res).value()
+        );
 
+        const auto& vk_ctx = *context;
         const auto& device = vk_ctx.get_device();
 
         auto command_recorder = CommandRecorder(vk_ctx, m_max_frames_in_flight);
@@ -47,7 +51,7 @@ namespace glimpse::renderer {
         std::vector<vk::raii::Semaphore> present_complete_semaphores;
         std::vector<vk::raii::Fence> in_flight_fences;
 
-        auto swapchain_res = VulkanSwapchain::new_vk_swapchain(vk_ctx, window);
+        auto swapchain_res = VulkanSwapchain::new_vk_swapchain(*context, window);
         if (!swapchain_res) return std::unexpected(std::move(swapchain_res).error());
         auto swapchain = std::move(swapchain_res).value();
 
@@ -71,7 +75,7 @@ namespace glimpse::renderer {
         auto pipeline = std::move(pipeline_res).value();
 
         VulkanCore core {
-            std::move(vk_ctx),
+            std::move(context),
             std::move(swapchain),
             std::move(command_recorder),
             std::move(pipeline)
@@ -98,12 +102,12 @@ namespace glimpse::renderer {
             auto result = draw_frame();
             if (!result) std::abort();
         }
-        const auto& device = m_vulkan_context.get_device();
+        const auto& device = m_vulkan_context->get_device();
         device.waitIdle();
     }
 
     std::expected<void, std::string> Renderer::draw_frame() {
-        const auto& device = m_vulkan_context.get_device();
+        const auto& device = m_vulkan_context->get_device();
         auto fence_res = device.waitForFences(
             *m_in_flight_fences[m_frame_index], vk::True, UINT64_MAX
         );
@@ -132,7 +136,7 @@ namespace glimpse::renderer {
             {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
             {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
         };
-        auto mesh_res = Mesh::new_mesh(vertices, m_vulkan_context);
+        auto mesh_res = Mesh::new_mesh(vertices, *m_vulkan_context, m_command_recorder);
         if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
         const auto mesh = std::move(mesh_res).value();
 
@@ -165,7 +169,7 @@ namespace glimpse::renderer {
             .setSignalSemaphoreCount(1)
             .setPSignalSemaphores(&*m_render_finished_semaphores[m_frame_index]);
 
-        const auto& queue = m_vulkan_context.get_queue();
+        const auto& queue = m_vulkan_context->get_queue();
         queue.submit(submit_info, *m_in_flight_fences[m_frame_index]);
     }
 
@@ -179,7 +183,7 @@ namespace glimpse::renderer {
             .setPImageIndices(&image_idx);
 
         
-        const auto& queue = m_vulkan_context.get_queue();
+        const auto& queue = m_vulkan_context->get_queue();
         auto result = queue.presentKHR(present_info_khr);
 
         if ((result == vk::Result::eSuboptimalKHR) 
