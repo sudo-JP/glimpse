@@ -68,55 +68,156 @@ namespace glimpse::renderer {
             };
         }
 
+        template <typename T>
+        std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
+            std::string> create_staging_buffer(
+            const glimpse::renderer::VulkanContext& context,
+            const std::vector<T> data,
+            const vk::DeviceSize size
+        ) {
+            auto staging_buffer_res = create_buffer(
+                size, 
+                vk::BufferUsageFlagBits::eTransferSrc,
+                vk::MemoryPropertyFlagBits::eHostVisible 
+                | vk::MemoryPropertyFlagBits::eHostCoherent,
+                context
+            );
+            if (!staging_buffer_res) return std::unexpected(std::move(staging_buffer_res).error());
+            auto [staging_buffer, staging_buffer_memory] = std::move(staging_buffer_res).value();
+
+
+            auto offset = vk::DeviceSize{0};
+            auto data_staging = static_cast<glimpse::renderer::VulkanVertex *>(staging_buffer_memory.mapMemory(offset, size));
+            std::copy(data.begin(), data.end(), data_staging);
+            staging_buffer_memory.unmapMemory();
+
+            return std::pair{
+                std::move(staging_buffer),
+                std::move(staging_buffer_memory)
+            };
+        }
+
+        std::expected<
+            std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, 
+            std::string> create_vertex_buffer(
+            const std::vector<glimpse::renderer::VulkanVertex>& vertices,
+            const glimpse::renderer::VulkanContext& context,
+            const glimpse::renderer::CommandRecorder& recorder
+        ) {
+            vk::DeviceSize buffer_size = sizeof(std::remove_cvref_t<decltype(vertices)>::value_type) * vertices.size();
+
+            // Staging buffer 
+            auto staging_buf_res = create_staging_buffer(
+                context, 
+                vertices, 
+                buffer_size
+            );
+
+            if (!staging_buf_res) return std::unexpected(std::move(staging_buf_res).error());
+            auto [staging_buffer, stagging_buffer_memory] = std::move(staging_buf_res).value();
+
+            auto buffer_res = create_buffer(
+                buffer_size, 
+                vk::BufferUsageFlagBits::eVertexBuffer 
+                | vk::BufferUsageFlagBits::eTransferDst, 
+                vk::MemoryPropertyFlagBits::eDeviceLocal, 
+                context
+            );
+
+            if (!buffer_res) return std::unexpected(std::move(buffer_res).error());
+            auto [vertex_buffer, vertex_buffer_memory] = std::move(buffer_res).value();
+
+            recorder.copy_and_submit_immediate(staging_buffer, vertex_buffer, buffer_size);
+
+            return std::pair{
+                std::move(vertex_buffer),
+                std::move(vertex_buffer_memory)
+            };
+        }
+
+        template <typename T>
+        requires std::same_as<T, uint16_t> 
+        || std::same_as<T, uint32_t>
+        || std::same_as<T, uint64_t>
+        std::expected<
+            std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, 
+            std::string> create_index_buffer(
+            const std::vector<T>& indices,
+            const glimpse::renderer::VulkanContext& context,
+            const glimpse::renderer::CommandRecorder& recorder
+        ) {
+            vk::DeviceSize buffer_size =  sizeof(std::remove_cvref_t<decltype(indices)>::value_type) * indices.size();
+
+            auto staging_buf_res = create_staging_buffer(
+                context, 
+                indices, 
+                buffer_size
+            );
+
+            if (!staging_buf_res) return std::unexpected(std::move(staging_buf_res).error());
+            auto [staging_buffer, stagging_buffer_memory] = std::move(staging_buf_res).value();
+
+            auto buffer_res = create_buffer(
+                buffer_size, 
+                vk::BufferUsageFlagBits::eIndexBuffer
+                | vk::BufferUsageFlagBits::eTransferDst, 
+                vk::MemoryPropertyFlagBits::eDeviceLocal, 
+                context
+            );
+
+            if (!buffer_res) return std::unexpected(std::move(buffer_res).error());
+            auto [index_buffer, index_buffer_memory] = std::move(buffer_res).value();
+
+            recorder.copy_and_submit_immediate(staging_buffer, index_buffer, buffer_size);
+
+            return std::pair{
+                std::move(index_buffer),
+                std::move(index_buffer_memory)
+            };
+        }
+
     } // End helper namespace
      
+    template <typename T>
+    requires std::same_as<T, uint16_t> 
+    || std::same_as<T, uint32_t>
+    || std::same_as<T, uint64_t>
     std::expected<Mesh, std::string> Mesh::new_mesh(
         const std::vector<glimpse::renderer::VulkanVertex>& vertices,
+        const std::vector<T> indices,
         const glimpse::renderer::VulkanContext& context,
         const glimpse::renderer::CommandRecorder& recorder
     ) {
-        vk::DeviceSize buffer_size = sizeof(std::remove_cvref_t<decltype(vertices)>::value_type) * vertices.size();
-        
-        auto staging_buffer_res = create_buffer(
-            buffer_size, 
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-            context
-        );
-        if (!staging_buffer_res) return std::unexpected(std::move(staging_buffer_res).error());
-        auto [staging_buffer, staging_buffer_memory] = std::move(staging_buffer_res).value();
+        // Vertex buffer creation
+        auto vertex_buf_res = create_vertex_buffer(vertices, context, recorder);
+        if (!vertex_buf_res) return std::unexpected(std::move(vertex_buf_res).error());
+        auto [vertex_buffer, vertex_buffer_memory] = std::move(vertex_buf_res).value();
 
-
-        auto offset = vk::DeviceSize{0};
-        auto data_staging = static_cast<glimpse::renderer::VulkanVertex *>(staging_buffer_memory.mapMemory(offset, buffer_size));
-        std::copy(vertices.begin(), vertices.end(), data_staging);
-        staging_buffer_memory.unmapMemory();
-
-        auto buffer_res = create_buffer(
-            buffer_size, 
-            vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 
-            vk::MemoryPropertyFlagBits::eDeviceLocal, 
-            context
-        );
-        if (!buffer_res) return std::unexpected(std::move(buffer_res).error());
-        auto [vertex_buffer, vertex_buffer_memory] = std::move(buffer_res).value();
-
-        recorder.copy_and_submit_immediate(staging_buffer, vertex_buffer, buffer_size);
+        auto index_buf_res = create_index_buffer(indices, context, recorder);
+        if (!index_buf_res) return std::unexpected(std::move(index_buf_res).error());
+        auto [index_buffer, index_buffer_memory] = std::move(index_buf_res).value();
 
         return Mesh(
             static_cast<uint32_t>(vertices.size()),
             std::move(vertex_buffer),
-            std::move(vertex_buffer_memory)
+            std::move(vertex_buffer_memory),
+            std::move(index_buffer),
+            std::move(index_buffer_memory)
         );
     }
 
     Mesh::Mesh(
         uint32_t size,
         vk::raii::Buffer vertex_buffer,
-        vk::raii::DeviceMemory vertex_buffer_memory
+        vk::raii::DeviceMemory vertex_buffer_memory,
+        vk::raii::Buffer index_buffer,
+        vk::raii::DeviceMemory index_buffer_memory
     ) : m_size(size),
     m_vertex_buffer(std::move(vertex_buffer)),
-    m_vertex_buffer_memory(std::move(vertex_buffer_memory)) {}
+    m_vertex_buffer_memory(std::move(vertex_buffer_memory)),
+    m_index_buffer(std::move(index_buffer)),
+    m_index_buffer_memory(std::move(index_buffer_memory))
+    {}
 
     const vk::raii::Buffer& Mesh::get_vertex_buffer() const {
         return m_vertex_buffer;

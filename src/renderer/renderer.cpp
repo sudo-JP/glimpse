@@ -131,12 +131,21 @@ namespace glimpse::renderer {
         m_command_recorder.reset_command_buffer(m_frame_index);
 
         // TODO: Let's....not put it here
-        const std::vector<VulkanVertex> vertices = {
-            {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        const std::vector<glimpse::renderer::VulkanVertex> vertices = {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
         };
-        auto mesh_res = Mesh::new_mesh(vertices, *m_vulkan_context, m_command_recorder);
+        const std::vector<uint16_t> indices = {
+            0, 1, 2, 2, 3, 0
+        };
+        auto mesh_res = Mesh::new_mesh(
+            vertices, 
+            indices,
+            *m_vulkan_context, 
+            m_command_recorder
+        );
         if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
         const auto mesh = std::move(mesh_res).value();
 
