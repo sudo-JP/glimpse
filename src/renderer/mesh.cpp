@@ -87,7 +87,7 @@ namespace glimpse::renderer {
 
 
             auto offset = vk::DeviceSize{0};
-            auto data_staging = static_cast<glimpse::renderer::VulkanVertex *>(staging_buffer_memory.mapMemory(offset, size));
+            auto data_staging = static_cast<T *>(staging_buffer_memory.mapMemory(offset, size));
             std::copy(data.begin(), data.end(), data_staging);
             staging_buffer_memory.unmapMemory();
 
@@ -146,7 +146,7 @@ namespace glimpse::renderer {
             const glimpse::renderer::VulkanContext& context,
             const glimpse::renderer::CommandRecorder& recorder
         ) {
-            vk::DeviceSize buffer_size =  sizeof(std::remove_cvref_t<decltype(indices)>::value_type) * indices.size();
+            vk::DeviceSize buffer_size = sizeof(typename std::remove_cvref_t<decltype(indices)>::value_type) * indices.size();
 
             auto staging_buf_res = create_staging_buffer(
                 context, 
@@ -184,7 +184,7 @@ namespace glimpse::renderer {
     || std::same_as<T, uint64_t>
     std::expected<Mesh, std::string> Mesh::new_mesh(
         const std::vector<glimpse::renderer::VulkanVertex>& vertices,
-        const std::vector<T> indices,
+        const std::vector<T>& indices,
         const glimpse::renderer::VulkanContext& context,
         const glimpse::renderer::CommandRecorder& recorder
     ) {
@@ -197,31 +197,67 @@ namespace glimpse::renderer {
         if (!index_buf_res) return std::unexpected(std::move(index_buf_res).error());
         auto [index_buffer, index_buffer_memory] = std::move(index_buf_res).value();
 
-        return Mesh(
-            static_cast<uint32_t>(vertices.size()),
+        AllocatedBuffer allocate_vert {
             std::move(vertex_buffer),
             std::move(vertex_buffer_memory),
+            static_cast<uint32_t>(vertices.size())
+        };
+
+        AllocatedBuffer allocate_index {
             std::move(index_buffer),
-            std::move(index_buffer_memory)
+            std::move(index_buffer_memory),
+            static_cast<uint32_t>(indices.size())
+        };
+
+        return Mesh(
+            std::move(allocate_vert),
+            std::move(allocate_index)
         );
     }
 
     Mesh::Mesh(
-        uint32_t size,
-        vk::raii::Buffer vertex_buffer,
-        vk::raii::DeviceMemory vertex_buffer_memory,
-        vk::raii::Buffer index_buffer,
-        vk::raii::DeviceMemory index_buffer_memory
-    ) : m_size(size),
-    m_vertex_buffer(std::move(vertex_buffer)),
-    m_vertex_buffer_memory(std::move(vertex_buffer_memory)),
-    m_index_buffer(std::move(index_buffer)),
-    m_index_buffer_memory(std::move(index_buffer_memory))
+        AllocatedBuffer vertex_buffer, 
+        AllocatedBuffer index_buffer
+    ) : m_vertex_buffer(std::move(vertex_buffer.buffer)),
+    m_vertex_buffer_memory(std::move(vertex_buffer.buffer_memory)),
+    m_vertices_size(std::move(vertex_buffer.size)),
+    m_index_buffer(std::move(index_buffer.buffer)),
+    m_index_buffer_memory(std::move(index_buffer.buffer_memory)),
+    m_indices_size(std::move(index_buffer.size))
     {}
 
     const vk::raii::Buffer& Mesh::get_vertex_buffer() const {
         return m_vertex_buffer;
     }
 
-    uint32_t Mesh::get_size() const { return m_size; }
+    const vk::raii::Buffer& Mesh::get_index_buffer() const {
+        return m_index_buffer;
+    }
+
+    uint32_t Mesh::get_vertices_size() const { return m_vertices_size; }
+    uint32_t Mesh::get_indices_size() const { return m_indices_size; }
+
+    template std::expected<Mesh, std::string>
+    Mesh::new_mesh<uint16_t>(
+        const std::vector<VulkanVertex>&,
+        const std::vector<uint16_t>&,
+        const VulkanContext&,
+        const CommandRecorder&
+    );
+
+    template std::expected<Mesh, std::string>
+    Mesh::new_mesh<uint32_t>(
+        const std::vector<VulkanVertex>&,
+        const std::vector<uint32_t>&,
+        const VulkanContext&,
+        const CommandRecorder&
+    );
+
+    template std::expected<Mesh, std::string>
+    Mesh::new_mesh<uint64_t>(
+        const std::vector<VulkanVertex>&,
+        const std::vector<uint64_t>&,
+        const VulkanContext&,
+        const CommandRecorder&
+    );
 }

@@ -22,27 +22,37 @@ namespace glimpse {
             || std::same_as<T, uint64_t>
             static std::expected<Mesh, std::string> new_mesh(
                 const std::vector<glimpse::renderer::VulkanVertex>& vertices,
-                const std::vector<T> indices,
+                const std::vector<T>& indices,
                 const glimpse::renderer::VulkanContext& context,
                 const glimpse::renderer::CommandRecorder& recorder
             );
 
             // getters
             const vk::raii::Buffer& get_vertex_buffer() const;
-            uint32_t get_size() const;
+            const vk::raii::Buffer& get_index_buffer() const;
+            uint32_t get_vertices_size() const;
+            uint32_t get_indices_size() const;
         private:
+            struct AllocatedBuffer {
+                vk::raii::Buffer buffer;
+                vk::raii::DeviceMemory buffer_memory;
+                uint32_t size;
+            };
+
             Mesh(
-                uint32_t size,
-                vk::raii::Buffer vertex_buffer,
-                vk::raii::DeviceMemory vertex_buffer_memory,
-                vk::raii::Buffer index_buffer,
-                vk::raii::DeviceMemory index_buffer_memory
+                AllocatedBuffer vertex_buffer,
+                AllocatedBuffer index_buffer
             );
-            uint32_t m_size;
+
+            // Vertex buffer
             vk::raii::Buffer m_vertex_buffer = nullptr;
             vk::raii::DeviceMemory m_vertex_buffer_memory = nullptr;
+            uint32_t m_vertices_size;
+
+            // Index buffer 
             vk::raii::Buffer m_index_buffer = nullptr;
             vk::raii::DeviceMemory m_index_buffer_memory = nullptr;
+            uint32_t m_indices_size;
         };
     }
 }

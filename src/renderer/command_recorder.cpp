@@ -125,10 +125,6 @@ namespace glimpse::renderer {
         const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
-        const auto& vertex_buffer = mesh.get_vertex_buffer();
-        // TODO: add offset to mesh, currently hard code 0 
-        command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
-        command_buffer.draw(mesh.get_size(), 1, 0, 0);
         command_buffer.setViewport(
             0, 
             vk::Viewport(
@@ -142,13 +138,14 @@ namespace glimpse::renderer {
         );
 
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapchain_extent));
+        const auto& vertex_buffer = mesh.get_vertex_buffer();
+        const auto& index_buffer = mesh.get_index_buffer();
 
-        command_buffer.draw(
-            3,  // Vertex count
-            1,  // Instance count
-            0,  // first vertex offset
-            0   // first instance offset
-        );
+        // TODO: add offset to mesh, currently hard code 0 
+        command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
+        command_buffer.bindIndexBuffer(*index_buffer, 0, vk::IndexType::eUint16); // TODO: add get type for mesh
+
+        command_buffer.drawIndexed(mesh.get_indices_size(), 1, 0, 0, 0);
 
         command_buffer.endRendering();
 
