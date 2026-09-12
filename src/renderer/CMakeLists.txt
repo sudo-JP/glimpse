@@ -6,4 +6,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     renderer.cpp
     types.cpp
     mesh.cpp
+    uniform_buffer.cpp
+    buffer_utils.cpp
 )

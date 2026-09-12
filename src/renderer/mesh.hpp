@@ -19,7 +19,6 @@ namespace glimpse {
             template <typename T>
             requires std::same_as<T, uint16_t> 
             || std::same_as<T, uint32_t>
-            || std::same_as<T, uint64_t>
             static std::expected<Mesh, std::string> new_mesh(
                 const std::vector<glimpse::renderer::VulkanVertex>& vertices,
                 const std::vector<T>& indices,

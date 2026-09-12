@@ -134,11 +134,22 @@ namespace glimpse::renderer {
             .setAttachmentCount(1)
             .setPAttachments(&color_blend_attachment);
 
+        const auto& device = context.get_device();
+        auto layout_binding = vk::DescriptorSetLayoutBinding()
+            .setBinding(0)
+            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+            .setDescriptorCount(1)
+            .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+        auto layout_info = vk::DescriptorSetLayoutCreateInfo()
+            .setBindingCount(1)
+            .setPBindings(&layout_binding);
+        auto descriptor_set_layout = vk::raii::DescriptorSetLayout(device, layout_info);
+
         auto pipeline_layout_info = vk::PipelineLayoutCreateInfo()
             .setSetLayoutCount(0)
+            .setPSetLayouts(&*descriptor_set_layout)
             .setPushConstantRangeCount(0);
 
-        const auto& device = context.get_device();
         auto pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_info);
 
         auto const& swapchain_format = swapchain.get_format();
@@ -169,7 +180,9 @@ namespace glimpse::renderer {
             device, nullptr, pipeline_create_info_chain.get<vk::GraphicsPipelineCreateInfo>()
         );
 
+
         return GraphicsPipeline(
+            std::move(descriptor_set_layout),
             std::move(pipeline_layout),
             std::move(graphics_pipeline)
         );
@@ -177,9 +190,11 @@ namespace glimpse::renderer {
 
 
     GraphicsPipeline::GraphicsPipeline(
+        vk::raii::DescriptorSetLayout descriptor_set_layout,
         vk::raii::PipelineLayout pipeline_layout,
         vk::raii::Pipeline graphics_pipeline
     ) :
+    m_descriptor_set_layout(std::move(descriptor_set_layout)),
     m_pipeline_layout(std::move(pipeline_layout)),
     m_graphics_pipeline(std::move(graphics_pipeline))
     {}

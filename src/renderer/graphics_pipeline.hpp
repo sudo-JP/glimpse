@@ -25,9 +25,11 @@ namespace glimpse {
             const vk::raii::Pipeline& get_graphics_pipeline() const;
         private:
             GraphicsPipeline(
+                vk::raii::DescriptorSetLayout descriptor_set_layout,
                 vk::raii::PipelineLayout pipeline_layout,
                 vk::raii::Pipeline graphics_pipeline
             );
+            vk::raii::DescriptorSetLayout m_descriptor_set_layout = nullptr;
             vk::raii::PipelineLayout m_pipeline_layout = nullptr; 
             vk::raii::Pipeline m_graphics_pipeline = nullptr;
         };
