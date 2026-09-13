@@ -131,7 +131,7 @@ namespace glimpse::renderer {
                 0.0f, 
                 0.0f, 
                 static_cast<float>(swapchain_extent.width), 
-                static_cast<float>(swapchain_extent.height),
+                -static_cast<float>(swapchain_extent.height),
                 0.0f,
                 1.0f
             )

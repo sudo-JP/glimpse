@@ -3,6 +3,7 @@
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/types.hpp"
+#include "renderer/uniform_buffer.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -11,6 +12,8 @@
 #include <memory>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
+#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 
 namespace glimpse::renderer {
@@ -131,6 +134,7 @@ namespace glimpse::renderer {
         m_command_recorder.reset_command_buffer(m_frame_index);
 
         // TODO: Let's....not put it here
+        // Mesh
         const std::vector<glimpse::renderer::VulkanVertex> vertices = {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
@@ -146,9 +150,31 @@ namespace glimpse::renderer {
             *m_vulkan_context, 
             m_command_recorder
         );
+
+
         if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
         const auto mesh = std::move(mesh_res).value();
 
+        // TODO: please dont do this
+        // Uniform Buffer
+        static auto start_time = std::chrono::high_resolution_clock::now();
+        auto current_time = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+        const auto& swapchain_extent = m_swapchain.get_extent();
+        glimpse::renderer::MVP mvp {
+            .model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+            .proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapchain_extent.width) / static_cast<float>(swapchain_extent.height), 0.1f, 10.0f)
+        };
+        auto ubo_res = glimpse::renderer::UniformBuffer<glimpse::renderer::MVP>::new_uniform_buffer(
+            m_max_frames_in_flight,
+            *m_vulkan_context
+        );
+        if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
+        auto ubo = std::move(ubo_res).value();
+        ubo.update(m_frame_index, mvp);
+
+        // Command buffer
         auto err = m_command_recorder.record_command_buffer(
             image_idx, 
             m_frame_index,
