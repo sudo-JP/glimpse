@@ -37,6 +37,7 @@ namespace glimpse::renderer {
     // Constructor
     std::expected<GraphicsPipeline, std::string> GraphicsPipeline::new_graphics_pipeline(
         const ShaderStageConfig& shader_config, 
+        size_t max_frames_in_flight,
         const glimpse::renderer::VulkanContext& context,
         const glimpse::renderer::VulkanSwapchain& swapchain
     ) {
@@ -182,6 +183,7 @@ namespace glimpse::renderer {
 
 
         return GraphicsPipeline(
+            context,
             std::move(descriptor_set_layout),
             std::move(pipeline_layout),
             std::move(graphics_pipeline)
@@ -190,14 +192,66 @@ namespace glimpse::renderer {
 
 
     GraphicsPipeline::GraphicsPipeline(
+        const glimpse::renderer::VulkanContext& context,
         vk::raii::DescriptorSetLayout descriptor_set_layout,
         vk::raii::PipelineLayout pipeline_layout,
         vk::raii::Pipeline graphics_pipeline
     ) :
+    m_vk_ctx(context),
     m_descriptor_set_layout(std::move(descriptor_set_layout)),
     m_pipeline_layout(std::move(pipeline_layout)),
     m_graphics_pipeline(std::move(graphics_pipeline))
     {}
+
+    template <typename T>
+    void GraphicsPipeline::attach_uniform_buffer(
+        size_t max_frames_in_flight,
+        const std::vector<vk::raii::Buffer>& uniform_buffers
+    ) {
+        if (!m_descriptor_pool.has_value() && !m_descriptor_sets.has_value()) {
+            const auto& context = m_vk_ctx.get();
+            const auto& device = context.get_device();
+            // Pool creation
+            auto pool_size = vk::DescriptorPoolSize()
+                .setType(vk::DescriptorType::eUniformBuffer)
+                .setDescriptorCount(max_frames_in_flight);
+            
+            auto pool_info = vk::DescriptorPoolCreateInfo()
+                .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
+                .setMaxSets(max_frames_in_flight)
+                .setPoolSizeCount(1)
+                .setPPoolSizes(&pool_size);
+
+            auto descriptor_pool = vk::raii::DescriptorPool(device, pool_info);
+
+            std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight, *m_descriptor_set_layout);
+            auto descriptor_alloc_info = vk::DescriptorSetAllocateInfo()
+                .setDescriptorPool(descriptor_pool)
+                .setDescriptorSetCount(static_cast<uint32_t>(layouts.size()))
+                .setPSetLayouts(layouts.data());
+
+            auto descriptor_sets = device.allocateDescriptorSets(descriptor_alloc_info);
+            for (size_t i = 0; i < max_frames_in_flight; i++) {
+                auto descriptor_buffer_info = vk::DescriptorBufferInfo()
+                    .setBuffer(uniform_buffers[i])
+                    .setOffset(0)
+                    .setRange(sizeof(T));
+
+                auto descriptor_write = vk::WriteDescriptorSet()
+                    .setDstSet(descriptor_sets[i])
+                    .setDstBinding(0)
+                    .setDstArrayElement(0)
+                    .setDescriptorCount(1)
+                    .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                    .setPBufferInfo(&descriptor_buffer_info);
+
+                    device.updateDescriptorSets(descriptor_write, {});
+            }
+
+            m_descriptor_pool = std::move(descriptor_pool);
+            m_descriptor_sets = std::move(descriptor_sets);
+        }
+    }
 
     const vk::raii::Pipeline& GraphicsPipeline::get_graphics_pipeline() const {
         return m_graphics_pipeline;
