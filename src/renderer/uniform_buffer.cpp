@@ -48,6 +48,11 @@ namespace glimpse::renderer {
         m_uniform_buffers_mapped(std::move(uniform_buffers_mapped)) 
     {}
 
+    template<typename T>
+    const std::vector<vk::raii::Buffer>& UniformBuffer<T>::get_uniform_buffers() const {
+        return m_uniform_buffers;
+    }
+
 
     template<typename T>
     void UniformBuffer<T>::update(size_t frame_index, const T& data) {

@@ -71,11 +71,24 @@ namespace glimpse::renderer {
 
         auto pipeline_res = GraphicsPipeline::new_graphics_pipeline(
             {std::string(SHADER_DIR) + "/sandbox.spv"}, 
+            m_max_frames_in_flight,
             vk_ctx, 
             swapchain
         );
         if (!pipeline_res) return std::unexpected(std::move(pipeline_res).error());
         auto pipeline = std::move(pipeline_res).value();
+
+        auto ubo_res = glimpse::renderer::UniformBuffer<glimpse::renderer::MVP>::new_uniform_buffer(
+            m_max_frames_in_flight,
+            vk_ctx
+        );
+        if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
+        auto ubo = std::move(ubo_res).value();
+        
+        pipeline.attach_uniform_buffer<glimpse::renderer::MVP>(
+            m_max_frames_in_flight, 
+            ubo.get_uniform_buffers()
+        );
 
         VulkanCore core {
             std::move(context),
@@ -91,6 +104,7 @@ namespace glimpse::renderer {
         return Renderer(
             std::move(core),
             std::move(sync_primitives),
+            std::move(ubo),
             std::move(window)
         ); 
     }
@@ -166,13 +180,7 @@ namespace glimpse::renderer {
             .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
             .proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapchain_extent.width) / static_cast<float>(swapchain_extent.height), 0.1f, 10.0f)
         };
-        auto ubo_res = glimpse::renderer::UniformBuffer<glimpse::renderer::MVP>::new_uniform_buffer(
-            m_max_frames_in_flight,
-            *m_vulkan_context
-        );
-        if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
-        auto ubo = std::move(ubo_res).value();
-        ubo.update(m_frame_index, mvp);
+        m_uniform_buffer.update(m_frame_index, mvp);
 
         // Command buffer
         auto err = m_command_recorder.record_command_buffer(
@@ -234,8 +242,10 @@ namespace glimpse::renderer {
     Renderer::Renderer(
         VulkanCore core,  
         VulkanSyncPrimitives sync_primitives,
+        glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> uniform_buffer,
         Window window
-    ) : m_vulkan_context(std::move(core.vulkan_context)),
+    ) : m_uniform_buffer(std::move(uniform_buffer)),
+    m_vulkan_context(std::move(core.vulkan_context)),
     m_swapchain(std::move(core.swapchain)),
     m_command_recorder(std::move(core.command_recorder)),
     m_pipeline(std::move(core.pipeline)),

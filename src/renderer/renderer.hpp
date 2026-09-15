@@ -4,6 +4,8 @@
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/swapchain.hpp"
 #include "renderer/command_recorder.hpp"
+#include "renderer/types.hpp"
+#include "renderer/uniform_buffer.hpp"
 #include "window/window.hpp"
 
 #include <cstdint>
@@ -34,6 +36,7 @@ namespace glimpse {
             Renderer(
                 VulkanCore core,  
                 VulkanSyncPrimitives sync_primitives,
+                glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> uniform_buffer,
                 Window window
             );
 
@@ -52,6 +55,8 @@ namespace glimpse {
             std::vector<vk::raii::Semaphore> m_present_complete_semaphores;
             std::vector<vk::raii::Semaphore> m_render_finished_semaphores;
             std::vector<vk::raii::Fence> m_in_flight_fences;
+
+            glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> m_uniform_buffer;
 
             // Frame tracking
             size_t m_frame_index = 0; 

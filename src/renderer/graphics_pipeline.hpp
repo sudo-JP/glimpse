@@ -32,6 +32,12 @@ namespace glimpse {
 
             // Getters
             const vk::raii::Pipeline& get_graphics_pipeline() const;
+
+            const std::optional<
+                std::reference_wrapper<const vk::raii::DescriptorSet>
+            > get_descriptor_set(size_t index) const;
+
+            const vk::raii::PipelineLayout& get_pipeline_layout() const;
         private:
             GraphicsPipeline(
                 const glimpse::renderer::VulkanContext& context,

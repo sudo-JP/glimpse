@@ -131,7 +131,7 @@ namespace glimpse::renderer {
                 0.0f, 
                 0.0f, 
                 static_cast<float>(swapchain_extent.width), 
-                -static_cast<float>(swapchain_extent.height),
+                static_cast<float>(swapchain_extent.height),
                 0.0f,
                 1.0f
             )
@@ -144,6 +144,20 @@ namespace glimpse::renderer {
         // TODO: add offset to mesh, currently hard code 0 
         command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
         command_buffer.bindIndexBuffer(*index_buffer, 0, vk::IndexType::eUint16); // TODO: add get type for mesh
+
+        const auto& descriptor_set_option = pipeline.get_descriptor_set(frame_index);
+        if (descriptor_set_option.has_value()) {
+            const auto& pipeline_layout = pipeline.get_pipeline_layout();
+
+            const auto& descriptor_set = descriptor_set_option->get();
+            command_buffer.bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics,
+                pipeline_layout,
+                0,
+                *descriptor_set,
+                nullptr
+            );
+        }
 
         command_buffer.drawIndexed(mesh.get_indices_size(), 1, 0, 0, 0);
 

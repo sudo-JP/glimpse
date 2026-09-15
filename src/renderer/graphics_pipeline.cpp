@@ -2,6 +2,7 @@
 #include "vulkan/vulkan.hpp"
 #include "types.hpp"
 #include <fstream>
+#include <ranges>
 
 namespace glimpse::renderer {
     namespace {
@@ -83,8 +84,8 @@ namespace glimpse::renderer {
         vk::Viewport viewport = vk::Viewport()
             .setX(0.0f)
             .setY(0.0f)
-            .setHeight(static_cast<float>(swapchain_extent.width))
-            .setWidth(static_cast<float>(swapchain_extent.height));
+            .setWidth(static_cast<float>(swapchain_extent.width))
+            .setHeight(static_cast<float>(swapchain_extent.height));
 
         vk::Offset2D scissor_offset = vk::Offset2D()
             .setX(0)
@@ -147,7 +148,7 @@ namespace glimpse::renderer {
         auto descriptor_set_layout = vk::raii::DescriptorSetLayout(device, layout_info);
 
         auto pipeline_layout_info = vk::PipelineLayoutCreateInfo()
-            .setSetLayoutCount(0)
+            .setSetLayoutCount(1)
             .setPSetLayouts(&*descriptor_set_layout)
             .setPushConstantRangeCount(0);
 
@@ -256,4 +257,20 @@ namespace glimpse::renderer {
     const vk::raii::Pipeline& GraphicsPipeline::get_graphics_pipeline() const {
         return m_graphics_pipeline;
     }
+
+    const std::optional<
+        std::reference_wrapper<const vk::raii::DescriptorSet>
+    > GraphicsPipeline::get_descriptor_set(size_t index) const {
+        if (!m_descriptor_sets.has_value()) return std::nullopt;
+        const auto& descriptor_sets = *m_descriptor_sets;
+        if (index >= descriptor_sets.size()) return std::nullopt;
+        return std::reference_wrapper{descriptor_sets[index]};
+    }
+
+    const vk::raii::PipelineLayout& GraphicsPipeline::get_pipeline_layout() const {
+        return m_pipeline_layout;
+    }
+
+    template void glimpse::renderer::GraphicsPipeline::attach_uniform_buffer<glimpse::renderer::MVP>
+    (size_t, const std::vector<vk::raii::Buffer>&);
 }

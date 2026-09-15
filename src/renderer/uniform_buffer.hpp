@@ -18,6 +18,7 @@ namespace glimpse {
             );
 
             void update(size_t frame_index, const T& data);
+            const std::vector<vk::raii::Buffer>& get_uniform_buffers() const;
         private: 
             UniformBuffer(
                 std::vector<vk::raii::Buffer> uniform_buffers,
