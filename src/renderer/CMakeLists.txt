@@ -8,4 +8,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     mesh.cpp
     uniform_buffer.cpp
     buffer_utils.cpp
+    texcture.cpp
 )

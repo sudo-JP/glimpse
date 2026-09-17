@@ -11,35 +11,6 @@
 
 namespace glimpse::renderer {
     namespace {
-        template <typename T>
-        std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
-            std::string> create_staging_buffer(
-            const glimpse::renderer::VulkanContext& context,
-            const std::vector<T> data,
-            const vk::DeviceSize size
-        ) {
-            auto staging_buffer_res = create_buffer(
-                size, 
-                vk::BufferUsageFlagBits::eTransferSrc,
-                vk::MemoryPropertyFlagBits::eHostVisible 
-                | vk::MemoryPropertyFlagBits::eHostCoherent,
-                context
-            );
-            if (!staging_buffer_res) return std::unexpected(std::move(staging_buffer_res).error());
-            auto [staging_buffer, staging_buffer_memory] = std::move(staging_buffer_res).value();
-
-
-            auto offset = vk::DeviceSize{0};
-            auto data_staging = static_cast<T *>(staging_buffer_memory.mapMemory(offset, size));
-            std::copy(data.begin(), data.end(), data_staging);
-            staging_buffer_memory.unmapMemory();
-
-            return std::pair{
-                std::move(staging_buffer),
-                std::move(staging_buffer_memory)
-            };
-        }
-
         std::expected<
             std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, 
             std::string> create_vertex_buffer(

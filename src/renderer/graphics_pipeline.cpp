@@ -2,7 +2,6 @@
 #include "vulkan/vulkan.hpp"
 #include "types.hpp"
 #include <fstream>
-#include <ranges>
 
 namespace glimpse::renderer {
     namespace {
