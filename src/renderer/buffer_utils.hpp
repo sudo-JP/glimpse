@@ -23,5 +23,11 @@ namespace glimpse {
             const std::vector<T> data,
             const vk::DeviceSize size
         );
+
+        std::expected<uint32_t, std::string> find_memory_type(
+            uint32_t type_filter,
+            vk::MemoryPropertyFlags properties,
+            const glimpse::renderer::VulkanContext& context
+        );
     }
 }
