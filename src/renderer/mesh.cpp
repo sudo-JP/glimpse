@@ -28,7 +28,7 @@ namespace glimpse::renderer {
             );
 
             if (!staging_buf_res) return std::unexpected(std::move(staging_buf_res).error());
-            auto [staging_buffer, stagging_buffer_memory] = std::move(staging_buf_res).value();
+            auto [staging_buffer, staging_buffer_memory] = std::move(staging_buf_res).value();
 
             auto buffer_res = create_buffer(
                 buffer_size, 
@@ -68,7 +68,7 @@ namespace glimpse::renderer {
             );
 
             if (!staging_buf_res) return std::unexpected(std::move(staging_buf_res).error());
-            auto [staging_buffer, stagging_buffer_memory] = std::move(staging_buf_res).value();
+            auto [staging_buffer, staging_buffer_memory] = std::move(staging_buf_res).value();
 
             auto buffer_res = create_buffer(
                 buffer_size, 

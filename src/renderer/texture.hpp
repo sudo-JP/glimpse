@@ -14,7 +14,10 @@ namespace glimpse {
                 const glimpse::renderer::VulkanContext& context
             );
         private:
-            Texture();
+            Texture(
+                vk::raii::Image texture_image,
+                vk::raii::DeviceMemory texture_image_memory
+            );
 
         vk::raii::Image m_texture_image = nullptr;
         vk::raii::DeviceMemory m_texture_image_memory = nullptr;

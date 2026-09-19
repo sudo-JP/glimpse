@@ -37,7 +37,8 @@ namespace glimpse {
             const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
             const vk::raii::CommandPool& get_command_pool() const;
         private:
-            std::expected<void, std::string> transition_image_layout(
+            // Private helpers
+            std::expected<void, std::string> transition_swapchain_image(
                 uint32_t image_index,
                 vk::ImageLayout old_layout,
                 vk::ImageLayout new_layout,
@@ -48,6 +49,18 @@ namespace glimpse {
                 size_t frame_index,
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
+
+            void transition_image_layout_immediate(
+                vk::raii::CommandBuffer& command_buffer, 
+                const vk::raii::Image& image, 
+                vk::ImageLayout old_layout, 
+                vk::ImageLayout new_layout
+            );
+
+            vk::raii::CommandBuffer begin_single_command_time_commands() const;
+            void end_single_time_command(vk::raii::CommandBuffer&& command_buffer) const;
+
+            // Members
             std::reference_wrapper<const glimpse::renderer::VulkanContext> m_vk_ctx;
             vk::raii::CommandPool m_command_pool = nullptr;
             vk::raii::CommandBuffers m_command_buffers;

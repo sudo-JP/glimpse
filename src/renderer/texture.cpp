@@ -76,7 +76,7 @@ namespace glimpse::renderer {
         );
 
         if (!staging_buf_res) return std::unexpected(std::move(staging_buf_res).error());
-        auto [staging_buffer, stagging_buffer_memory] = std::move(staging_buf_res).value();
+        auto [staging_buffer, staging_buffer_memory] = std::move(staging_buf_res).value();
         
         // Get the image and image memory data
         auto texture_image_res = create_image(
@@ -93,6 +93,16 @@ namespace glimpse::renderer {
         auto [texture_image, texture_image_memory] = std::move(texture_image_res).value();
 
         ktxTexture_Destroy(texture);
-        return Texture();
+        return Texture(
+            std::move(texture_image),
+            std::move(texture_image_memory)
+        );
     }
+
+    Texture::Texture(
+        vk::raii::Image texture_image,
+        vk::raii::DeviceMemory texture_image_memory
+    ) : m_texture_image(std::move(texture_image)),
+    m_texture_image_memory(std::move(texture_image_memory))
+    {}
 }

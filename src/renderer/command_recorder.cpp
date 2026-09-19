@@ -7,6 +7,9 @@
 #include <expected>
 
 namespace glimpse::renderer {
+    namespace {
+    } // end helper namespace
+
     // Constructor
     CommandRecorder::CommandRecorder(
     const VulkanContext& context,
@@ -24,7 +27,7 @@ namespace glimpse::renderer {
     {}
 
 
-    std::expected<void, std::string> CommandRecorder::transition_image_layout(
+    std::expected<void, std::string> CommandRecorder::transition_swapchain_image(
         uint32_t image_index,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
@@ -68,6 +71,28 @@ namespace glimpse::renderer {
         return {};
     }
 
+    void CommandRecorder::transition_image_layout_immediate(
+        vk::raii::CommandBuffer& command_buffer, 
+        const vk::raii::Image& image, 
+        vk::ImageLayout old_layout, 
+        vk::ImageLayout new_layout
+    ) {
+        auto subresource_range = vk::ImageSubresourceRange()
+            .setAspectMask(vk::ImageAspectFlagBits::eColor)
+            .setLevelCount(1)
+            .setLayerCount(1);
+
+        auto barrier = vk::ImageMemoryBarrier()
+            .setOldLayout(old_layout)
+            .setNewLayout(new_layout)
+            .setSrcQueueFamilyIndex(vk::QueueFamilyIgnored)
+            .setDstQueueFamilyIndex(vk::QueueFamilyIgnored)
+            .setImage(image)
+            .setSubresourceRange(subresource_range);
+
+        //command_buffer.pipelineBarrier()
+    }
+
     std::expected<void, std::string> CommandRecorder::record_command_buffer(
         uint32_t image_index,
         size_t frame_index,
@@ -78,7 +103,7 @@ namespace glimpse::renderer {
         // Start command buffer, after select the current command buffer index
         const auto& command_buffer = m_command_buffers[frame_index];
         command_buffer.begin({});
-        auto transition_res = transition_image_layout(
+        auto transition_res = transition_swapchain_image(
             image_index,
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal,
@@ -163,7 +188,7 @@ namespace glimpse::renderer {
 
         command_buffer.endRendering();
 
-        transition_res = transition_image_layout(
+        transition_res = transition_swapchain_image(
             image_index,
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::ImageLayout::ePresentSrcKHR,
@@ -183,36 +208,43 @@ namespace glimpse::renderer {
         return {};
     }
 
+    vk::raii::CommandBuffer CommandRecorder::begin_single_command_time_commands() const {
+        auto alloc_info = vk::CommandBufferAllocateInfo()
+            .setCommandPool(m_command_pool)
+            .setLevel(vk::CommandBufferLevel::ePrimary)
+            .setCommandBufferCount(1);
+
+        const auto& context = m_vk_ctx.get();
+        const auto& device = context.get_device();
+        auto command_buffer = std::move(device.allocateCommandBuffers(alloc_info).front());
+
+        // Buffer 
+        command_buffer.begin({
+            vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+        });
+        
+        return std::move(command_buffer);
+    }
+
+    void CommandRecorder::end_single_time_command(vk::raii::CommandBuffer&& command_buffer) const {
+        command_buffer.end();
+
+        const auto& queue = m_vk_ctx.get().get_queue();
+        const auto submit_info = vk::SubmitInfo()
+            .setCommandBufferCount(1)
+            .setPCommandBuffers(&*command_buffer);
+        queue.submit(submit_info, nullptr);
+        queue.waitIdle();
+    }
+
     void CommandRecorder::copy_and_submit_immediate(
         vk::raii::Buffer& src_buffer, 
         vk::raii::Buffer& dst_buffer, 
         vk::DeviceSize size
     ) const {
-        uint32_t buffer_count = 1;
-
-        auto alloc_info = vk::CommandBufferAllocateInfo()
-            .setCommandPool(m_command_pool)
-            .setLevel(vk::CommandBufferLevel::ePrimary)
-            .setCommandBufferCount(buffer_count);
-
-        const auto& context = m_vk_ctx.get();
-        const auto& device = context.get_device();
-        auto command_copy_buffer = std::move(device.allocateCommandBuffers(alloc_info).front());
-
-        // Buffer 
-        command_copy_buffer.begin({
-            vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-        });
+        auto command_copy_buffer = begin_single_command_time_commands();
         command_copy_buffer.copyBuffer(*src_buffer, *dst_buffer, vk::BufferCopy(0, 0, size));
-        command_copy_buffer.end();
-
-        // Send
-        const auto& queue = context.get_queue();
-        const auto submit_info = vk::SubmitInfo()
-            .setCommandBufferCount(buffer_count)
-            .setPCommandBuffers(&*command_copy_buffer);
-        queue.submit(submit_info, nullptr);
-        queue.waitIdle();
+        end_single_time_command(std::move(command_copy_buffer));
     }
 
 
