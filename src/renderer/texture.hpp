@@ -21,6 +21,8 @@ namespace glimpse {
 
         vk::raii::Image m_texture_image = nullptr;
         vk::raii::DeviceMemory m_texture_image_memory = nullptr;
+        vk::raii::ImageView m_texture_image_view = nullptr;
+         
         };
     }
 }

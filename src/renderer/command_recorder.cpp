@@ -71,7 +71,7 @@ namespace glimpse::renderer {
         return {};
     }
 
-    void CommandRecorder::transition_image_layout_immediate(
+    std::expected<void, std::string> CommandRecorder::transition_image_layout_immediate(
         vk::raii::CommandBuffer& command_buffer, 
         const vk::raii::Image& image, 
         vk::ImageLayout old_layout, 
@@ -90,7 +90,30 @@ namespace glimpse::renderer {
             .setImage(image)
             .setSubresourceRange(subresource_range);
 
-        //command_buffer.pipelineBarrier()
+        vk::PipelineStageFlags src_stage;
+        vk::PipelineStageFlags dst_stage;
+
+        if (old_layout == vk::ImageLayout::eUndefined
+        && new_layout == vk::ImageLayout::eTransferDstOptimal) {
+            barrier.srcAccessMask = {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        } else if (old_layout == vk::ImageLayout::eTransferDstOptimal
+        && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+            src_stage = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        } else {
+            return std::unexpected("unsupported layout transition");
+        }
+
+        command_buffer.pipelineBarrier(src_stage, dst_stage, {}, {}, {}, barrier);
+
+        return {};
     }
 
     std::expected<void, std::string> CommandRecorder::record_command_buffer(

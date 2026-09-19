@@ -1,4 +1,5 @@
 #include "swapchain.hpp"
+#include "renderer/utils.hpp"
 #include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -80,27 +81,10 @@ namespace glimpse::renderer {
             const std::vector<vk::Image>& swapchain_images
         ) {
             std::vector<vk::raii::ImageView> swapchain_image_views;
-            auto image_view_create_info = vk::ImageViewCreateInfo()
-                .setViewType(vk::ImageViewType::e2D)
-                .setFormat(swapchain_surface_format.format)
-                .setSubresourceRange({
-                    vk::ImageAspectFlagBits::eColor,
-                    0,
-                    1,
-                    0,
-                    1
-                });
 
-            image_view_create_info.components = {
-                vk::ComponentSwizzle::eIdentity, 
-                vk::ComponentSwizzle::eIdentity, 
-                vk::ComponentSwizzle::eIdentity, 
-                vk::ComponentSwizzle::eIdentity
-            };
-
+            swapchain_image_views.reserve(swapchain_images.size());
             for (const auto& image: swapchain_images) {
-                image_view_create_info.image = image;
-                swapchain_image_views.emplace_back(device, image_view_create_info);
+                swapchain_image_views.emplace_back(create_image_view(image, swapchain_surface_format.format, device));
             }
 
             return swapchain_image_views;

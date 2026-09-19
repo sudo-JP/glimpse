@@ -1,5 +1,5 @@
 #include "texture.hpp"
-#include "renderer/buffer_utils.hpp"
+#include "renderer/utils.hpp"
 #include "renderer/context.hpp"
 #include <cstdint>
 #include <ktx.h>
@@ -93,6 +93,13 @@ namespace glimpse::renderer {
         auto [texture_image, texture_image_memory] = std::move(texture_image_res).value();
 
         ktxTexture_Destroy(texture);
+        
+        auto texture_image_view = create_image_view(
+            *texture_image,
+            vk::Format::eR8G8B8A8Srgb,
+            context.get_device()
+        );
+
         return Texture(
             std::move(texture_image),
             std::move(texture_image_memory)

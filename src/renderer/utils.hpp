@@ -29,5 +29,12 @@ namespace glimpse {
             vk::MemoryPropertyFlags properties,
             const glimpse::renderer::VulkanContext& context
         );
+
+        vk::raii::ImageView create_image_view(
+            const vk::Image& image, 
+            vk::Format format,
+            const vk::raii::Device& device
+        );
     }
 }
+

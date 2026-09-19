@@ -50,7 +50,7 @@ namespace glimpse {
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
 
-            void transition_image_layout_immediate(
+            std::expected<void, std::string> transition_image_layout_immediate(
                 vk::raii::CommandBuffer& command_buffer, 
                 const vk::raii::Image& image, 
                 vk::ImageLayout old_layout, 

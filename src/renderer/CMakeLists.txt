@@ -7,6 +7,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     types.cpp
     mesh.cpp
     uniform_buffer.cpp
-    buffer_utils.cpp
+    utils.cpp
     texcture.cpp
 )

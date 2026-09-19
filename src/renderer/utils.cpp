@@ -1,6 +1,7 @@
-#include "buffer_utils.hpp"
+#include "utils.hpp"
 #include <cstdint>
 
+// Bunch of shared helpers
 namespace glimpse::renderer {
     std::expected<uint32_t, std::string> find_memory_type(
         uint32_t type_filter,
@@ -86,5 +87,24 @@ namespace glimpse::renderer {
             std::move(staging_buffer),
             std::move(staging_buffer_memory)
         };
+    }
+
+    vk::raii::ImageView create_image_view(
+        const vk::Image& image, 
+        vk::Format format,
+        const vk::raii::Device& device
+    ) {
+        auto sub_resource_range = vk::ImageSubresourceRange()
+            .setAspectMask(vk::ImageAspectFlagBits::eColor)
+            .setBaseMipLevel(0)
+            .setLevelCount(0)
+            .setBaseArrayLayer(0)
+            .setLayerCount(1);
+        auto view_info = vk::ImageViewCreateInfo()
+            .setImage(image)
+            .setViewType(vk::ImageViewType::e2D)
+            .setFormat(format)
+            .setSubresourceRange(sub_resource_range);
+        return vk::raii::ImageView(device, view_info);
     }
 }
