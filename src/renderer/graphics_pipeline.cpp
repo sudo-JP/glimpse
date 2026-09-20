@@ -136,14 +136,23 @@ namespace glimpse::renderer {
             .setPAttachments(&color_blend_attachment);
 
         const auto& device = context.get_device();
-        auto layout_binding = vk::DescriptorSetLayoutBinding()
+        auto uniform_binding = vk::DescriptorSetLayoutBinding()
             .setBinding(0)
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
             .setDescriptorCount(1)
             .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+        auto sampler_binding = vk::DescriptorSetLayoutBinding()
+            .setBinding(1)
+            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+            .setDescriptorCount(1)
+            .setStageFlags(vk::ShaderStageFlagBits::eFragment);
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
+            std::move(uniform_binding),
+            std::move(sampler_binding)
+        };
         auto layout_info = vk::DescriptorSetLayoutCreateInfo()
-            .setBindingCount(1)
-            .setPBindings(&layout_binding);
+            .setBindingCount(static_cast<uint32_t>(bindings.size()))
+            .setPBindings(bindings.data());
         auto descriptor_set_layout = vk::raii::DescriptorSetLayout(device, layout_info);
 
         auto pipeline_layout_info = vk::PipelineLayoutCreateInfo()

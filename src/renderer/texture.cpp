@@ -48,6 +48,30 @@ namespace glimpse::renderer {
                 std::move(image_memory)
             };
         }
+
+        vk::raii::Sampler create_sampler(
+            const glimpse::renderer::VulkanContext& context
+        ) {
+            const auto& phys_device = context.get_physical_device();
+            const auto& device = context.get_device();
+
+            auto properties = phys_device.getProperties();
+            auto sampler_info = vk::SamplerCreateInfo()
+                .setMagFilter(vk::Filter::eLinear)
+                .setMinFilter(vk::Filter::eLinear)
+                .setMipmapMode(vk::SamplerMipmapMode::eLinear)
+                .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+                .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+                .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+                .setAnisotropyEnable(vk::True)
+                .setMaxAnisotropy(properties.limits.maxSamplerAnisotropy)
+                .setCompareEnable(vk::False)
+                .setCompareOp(vk::CompareOp::eAlways)
+                .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+                .setUnnormalizedCoordinates(vk::False);
+
+            return vk::raii::Sampler(device, sampler_info);
+        }
     } // end helper namespace
 
 
@@ -100,16 +124,21 @@ namespace glimpse::renderer {
             context.get_device()
         );
 
+        auto texture_sampler = create_sampler(context);
+
         return Texture(
             std::move(texture_image),
-            std::move(texture_image_memory)
+            std::move(texture_image_memory),
+            std::move(texture_sampler)
         );
     }
 
     Texture::Texture(
         vk::raii::Image texture_image,
-        vk::raii::DeviceMemory texture_image_memory
+        vk::raii::DeviceMemory texture_image_memory,
+        vk::raii::Sampler texture_sampler
     ) : m_texture_image(std::move(texture_image)),
-    m_texture_image_memory(std::move(texture_image_memory))
+    m_texture_image_memory(std::move(texture_image_memory)),
+    m_texture_sampler(std::move(texture_sampler))
     {}
 }
