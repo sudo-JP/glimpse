@@ -9,7 +9,7 @@ namespace glimpse::renderer {
             .setInputRate(vk::VertexInputRate::eVertex);
     } 
 
-    std::array<vk::VertexInputAttributeDescription, 2> VulkanVertex::get_attribute_descriptions() {
+    std::array<vk::VertexInputAttributeDescription, 3> VulkanVertex::get_attribute_descriptions() {
         auto pos = vk::VertexInputAttributeDescription()
             .setLocation(0)
             .setBinding(0)
@@ -20,6 +20,15 @@ namespace glimpse::renderer {
             .setBinding(0)
             .setFormat(vk::Format::eR32G32B32Sfloat)
             .setOffset(offsetof(VulkanVertex, color));
-        return {pos, color};
+        auto texture = vk::VertexInputAttributeDescription()
+            .setLocation(2)
+            .setBinding(0)
+            .setFormat(vk::Format::eR32G32Sfloat)
+            .setOffset(offsetof(VulkanVertex, tex_coord));
+        return {
+            std::move(pos), 
+            std::move(color), 
+            std::move(texture)
+        };
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "context.hpp"
+#include "renderer/texture.hpp"
 #include "swapchain.hpp"
 #include <expected>
 #include <optional>
@@ -25,9 +26,10 @@ namespace glimpse {
             );
 
             template <typename T>
-            void attach_uniform_buffer(
+            void attach_resources(
                 size_t max_frames_in_flight,
-                const std::vector<vk::raii::Buffer>& uniform_buffers
+                const std::vector<vk::raii::Buffer>& uniform_buffers,
+                const glimpse::renderer::Texture& texture
             );
 
             // Getters

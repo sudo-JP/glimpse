@@ -141,4 +141,12 @@ namespace glimpse::renderer {
     m_texture_image_memory(std::move(texture_image_memory)),
     m_texture_sampler(std::move(texture_sampler))
     {}
+
+    const vk::raii::Sampler& Texture::get_texture_sampler() const {
+        return m_texture_sampler;
+    }
+
+    const vk::raii::ImageView& Texture::get_texture_image_view() const {
+        return m_texture_image_view;
+    }
 }

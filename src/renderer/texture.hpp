@@ -13,6 +13,10 @@ namespace glimpse {
                 const std::string& filename,
                 const glimpse::renderer::VulkanContext& context
             );
+
+            // getters
+            const vk::raii::Sampler& get_texture_sampler() const;
+            const vk::raii::ImageView& get_texture_image_view() const;
         private:
             Texture(
                 vk::raii::Image texture_image,

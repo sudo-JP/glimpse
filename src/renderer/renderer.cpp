@@ -85,7 +85,7 @@ namespace glimpse::renderer {
         if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
         auto ubo = std::move(ubo_res).value();
         
-        pipeline.attach_uniform_buffer<glimpse::renderer::MVP>(
+        pipeline.attach_resources<glimpse::renderer::MVP>(
             m_max_frames_in_flight, 
             ubo.get_uniform_buffers()
         );
@@ -150,10 +150,10 @@ namespace glimpse::renderer {
         // TODO: Let's....not put it here
         // Mesh
         const std::vector<glimpse::renderer::VulkanVertex> vertices = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
         };
         const std::vector<uint16_t> indices = {
             0, 1, 2, 2, 3, 0

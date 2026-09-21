@@ -213,23 +213,33 @@ namespace glimpse::renderer {
     {}
 
     template <typename T>
-    void GraphicsPipeline::attach_uniform_buffer(
+    void GraphicsPipeline::attach_resources(
         size_t max_frames_in_flight,
-        const std::vector<vk::raii::Buffer>& uniform_buffers
+        const std::vector<vk::raii::Buffer>& uniform_buffers,
+        const glimpse::renderer::Texture& texture
     ) {
         if (!m_descriptor_pool.has_value() && !m_descriptor_sets.has_value()) {
             const auto& context = m_vk_ctx.get();
             const auto& device = context.get_device();
             // Pool creation
-            auto pool_size = vk::DescriptorPoolSize()
+            auto uniform_pool_size = vk::DescriptorPoolSize()
                 .setType(vk::DescriptorType::eUniformBuffer)
                 .setDescriptorCount(max_frames_in_flight);
+
+            auto sampler_pool_size = vk::DescriptorPoolSize()
+                .setType(vk::DescriptorType::eCombinedImageSampler)
+                .setDescriptorCount(max_frames_in_flight);
+
+            std::array<vk::DescriptorPoolSize, 2> pool_size = {
+                std::move(uniform_pool_size),
+                std::move(sampler_pool_size)
+            };
             
             auto pool_info = vk::DescriptorPoolCreateInfo()
                 .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
                 .setMaxSets(max_frames_in_flight)
-                .setPoolSizeCount(1)
-                .setPPoolSizes(&pool_size);
+                .setPoolSizeCount(static_cast<uint32_t>(pool_size.size()))
+                .setPPoolSizes(pool_size.data());
 
             auto descriptor_pool = vk::raii::DescriptorPool(device, pool_info);
 
@@ -241,12 +251,13 @@ namespace glimpse::renderer {
 
             auto descriptor_sets = device.allocateDescriptorSets(descriptor_alloc_info);
             for (size_t i = 0; i < max_frames_in_flight; i++) {
+                // Uniforms 
                 auto descriptor_buffer_info = vk::DescriptorBufferInfo()
                     .setBuffer(uniform_buffers[i])
                     .setOffset(0)
                     .setRange(sizeof(T));
 
-                auto descriptor_write = vk::WriteDescriptorSet()
+                auto write_uniform = vk::WriteDescriptorSet()
                     .setDstSet(descriptor_sets[i])
                     .setDstBinding(0)
                     .setDstArrayElement(0)
@@ -254,7 +265,27 @@ namespace glimpse::renderer {
                     .setDescriptorType(vk::DescriptorType::eUniformBuffer)
                     .setPBufferInfo(&descriptor_buffer_info);
 
-                    device.updateDescriptorSets(descriptor_write, {});
+                // Texture stuff
+                const auto& texture_sampler = texture.get_texture_sampler();
+                const auto& texture_image_view = texture.get_texture_image_view();
+                auto image_info = vk::DescriptorImageInfo()
+                    .setSampler(texture_sampler)
+                    .setImageView(texture_image_view)
+                    .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+                auto write_sampler = vk::WriteDescriptorSet()
+                    .setDstSet(descriptor_sets[i])
+                    .setDstBinding(1)
+                    .setDstArrayElement(0)
+                    .setDescriptorCount(1)
+                    .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                    .setPImageInfo(&image_info);
+
+                std::array<vk::WriteDescriptorSet, 2> descriptor_write = {
+                    std::move(write_uniform),
+                    std::move(write_sampler)
+                };
+
+                device.updateDescriptorSets(descriptor_write, {});
             }
 
             m_descriptor_pool = std::move(descriptor_pool);
