@@ -37,6 +37,7 @@ namespace glimpse {
                 VulkanCore core,  
                 VulkanSyncPrimitives sync_primitives,
                 glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> uniform_buffer,
+                glimpse::renderer::Texture texture,
                 Window window
             );
 
@@ -57,6 +58,7 @@ namespace glimpse {
             std::vector<vk::raii::Fence> m_in_flight_fences;
 
             glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> m_uniform_buffer;
+            glimpse::renderer::Texture m_texture;
 
             // Frame tracking
             size_t m_frame_index = 0; 

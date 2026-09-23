@@ -310,6 +310,9 @@ namespace glimpse::renderer {
         return m_pipeline_layout;
     }
 
-    template void glimpse::renderer::GraphicsPipeline::attach_uniform_buffer<glimpse::renderer::MVP>
-    (size_t, const std::vector<vk::raii::Buffer>&);
+    template void glimpse::renderer::GraphicsPipeline::attach_resources<glimpse::renderer::MVP>(
+        size_t, 
+        const std::vector<vk::raii::Buffer>&,
+        const glimpse::renderer::Texture& 
+    );
 }

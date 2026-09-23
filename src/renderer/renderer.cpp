@@ -2,6 +2,7 @@
 #include "renderer/context.hpp"
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/mesh.hpp"
+#include "renderer/texture.hpp"
 #include "renderer/types.hpp"
 #include "renderer/uniform_buffer.hpp"
 #include "window/window.hpp"
@@ -10,6 +11,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <print>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 #include <chrono>
@@ -17,7 +19,6 @@
 
 
 namespace glimpse::renderer {
-    
     std::expected<Renderer, std::string> Renderer::new_renderer() {
         constexpr int width = 1920, height = 1080;
         auto window_res = Window::new_window(width, height, std::move("glimpse of..."));
@@ -84,10 +85,17 @@ namespace glimpse::renderer {
         );
         if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
         auto ubo = std::move(ubo_res).value();
+        auto texture_res = glimpse::renderer::Texture::new_texture(
+            std::string(WORLD_DIR) + "/image.ktx2",
+            *context
+        );
+        if (!texture_res) return std::unexpected(std::move(texture_res).error());
+        auto texture = std::move(texture_res).value();
         
         pipeline.attach_resources<glimpse::renderer::MVP>(
             m_max_frames_in_flight, 
-            ubo.get_uniform_buffers()
+            ubo.get_uniform_buffers(),
+            texture
         );
 
         VulkanCore core {
@@ -105,6 +113,7 @@ namespace glimpse::renderer {
             std::move(core),
             std::move(sync_primitives),
             std::move(ubo),
+            std::move(texture),
             std::move(window)
         ); 
     }
@@ -243,8 +252,10 @@ namespace glimpse::renderer {
         VulkanCore core,  
         VulkanSyncPrimitives sync_primitives,
         glimpse::renderer::UniformBuffer<glimpse::renderer::MVP> uniform_buffer,
+        glimpse::renderer::Texture texture,
         Window window
     ) : m_uniform_buffer(std::move(uniform_buffer)),
+    m_texture(std::move(texture)),
     m_vulkan_context(std::move(core.vulkan_context)),
     m_swapchain(std::move(core.swapchain)),
     m_command_recorder(std::move(core.command_recorder)),

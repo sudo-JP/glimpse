@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "types.hpp"
 #include <cstdint>
 
 // Bunch of shared helpers
@@ -107,4 +108,16 @@ namespace glimpse::renderer {
             .setSubresourceRange(sub_resource_range);
         return vk::raii::ImageView(device, view_info);
     }
+
+    template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string> 
+    glimpse::renderer::create_staging_buffer<glimpse::renderer::VulkanVertex>(glimpse::renderer::VulkanContext const&, std::vector<glimpse::renderer::VulkanVertex>, unsigned long);
+
+    template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string> 
+    glimpse::renderer::create_staging_buffer<unsigned short>(glimpse::renderer::VulkanContext const&, std::vector<unsigned short>, unsigned long);
+
+    template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string> 
+    glimpse::renderer::create_staging_buffer<unsigned int>(glimpse::renderer::VulkanContext const&, std::vector<unsigned int>, unsigned long);
+
+    template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string> 
+    glimpse::renderer::create_staging_buffer<unsigned char>(glimpse::renderer::VulkanContext const&, std::vector<unsigned char>, unsigned long);
 }
