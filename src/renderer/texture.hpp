@@ -7,10 +7,12 @@
 
 namespace glimpse {
     namespace renderer {
+        class CommandRecorder;
         class Texture {
         public:
             static std::expected<Texture, std::string> new_texture(
                 const std::string& filename,
+                const glimpse::renderer::CommandRecorder& recorder,
                 const glimpse::renderer::VulkanContext& context
             );
 
@@ -21,6 +23,7 @@ namespace glimpse {
             Texture(
                 vk::raii::Image texture_image,
                 vk::raii::DeviceMemory texture_image_memory,
+                vk::raii::ImageView texture_image_view,
                 vk::raii::Sampler texture_sampler
             );
 

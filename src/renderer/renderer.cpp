@@ -87,6 +87,7 @@ namespace glimpse::renderer {
         auto ubo = std::move(ubo_res).value();
         auto texture_res = glimpse::renderer::Texture::new_texture(
             std::string(WORLD_DIR) + "/image.ktx2",
+            command_recorder,
             *context
         );
         if (!texture_res) return std::unexpected(std::move(texture_res).error());

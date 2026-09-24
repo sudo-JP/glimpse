@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ktx.h>
 #include <utility>
+#include "renderer/command_recorder.hpp"
 
 namespace glimpse::renderer {
     namespace {
@@ -77,6 +78,7 @@ namespace glimpse::renderer {
 
     std::expected<Texture, std::string> Texture::new_texture(
         const std::string& filename,
+        const glimpse::renderer::CommandRecorder& recorder,
         const glimpse::renderer::VulkanContext& context
     ) {
         ktxTexture *texture = nullptr;
@@ -116,6 +118,14 @@ namespace glimpse::renderer {
         if (!texture_image_res) return std::unexpected(std::move(texture_image_res).error());
         auto [texture_image, texture_image_memory] = std::move(texture_image_res).value();
 
+        auto upload_res = recorder.upload_texture(
+            staging_buffer, 
+            texture_image,
+            static_cast<uint32_t>(texture->baseWidth), 
+            static_cast<uint32_t>(texture->baseHeight)
+        );
+        if (!upload_res) return std::unexpected(std::move(upload_res).error());
+
         ktxTexture_Destroy(texture);
         
         auto texture_image_view = create_image_view(
@@ -129,6 +139,7 @@ namespace glimpse::renderer {
         return Texture(
             std::move(texture_image),
             std::move(texture_image_memory),
+            std::move(texture_image_view),
             std::move(texture_sampler)
         );
     }
@@ -136,9 +147,11 @@ namespace glimpse::renderer {
     Texture::Texture(
         vk::raii::Image texture_image,
         vk::raii::DeviceMemory texture_image_memory,
+        vk::raii::ImageView texture_image_view,
         vk::raii::Sampler texture_sampler
     ) : m_texture_image(std::move(texture_image)),
     m_texture_image_memory(std::move(texture_image_memory)),
+    m_texture_image_view(std::move(texture_image_view)),
     m_texture_sampler(std::move(texture_sampler))
     {}
 

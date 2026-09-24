@@ -33,6 +33,13 @@ namespace glimpse {
                 vk::DeviceSize size
             ) const;
 
+            std::expected<void, std::string> upload_texture(
+                const vk::raii::Buffer& staging_buffer,
+                const vk::raii::Image& image, 
+                uint32_t width,
+                uint32_t height
+            ) const;
+
             // getters
             const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
             const vk::raii::CommandPool& get_command_pool() const;
@@ -50,12 +57,12 @@ namespace glimpse {
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
 
-            std::expected<void, std::string> transition_image_layout_immediate(
+            std::expected<void, std::string> transition_image_layout(
                 vk::raii::CommandBuffer& command_buffer, 
                 const vk::raii::Image& image, 
                 vk::ImageLayout old_layout, 
                 vk::ImageLayout new_layout
-            );
+            ) const;
 
             vk::raii::CommandBuffer begin_single_command_time_commands() const;
             void end_single_time_command(vk::raii::CommandBuffer&& command_buffer) const;

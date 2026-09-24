@@ -8,6 +8,28 @@
 
 namespace glimpse::renderer {
     namespace {
+        void copy_to_buffer_image(
+            vk::raii::CommandBuffer& command_buffer, 
+            const vk::raii::Buffer& buffer, 
+            const vk::raii::Image& image, 
+            uint32_t width, 
+            uint32_t height
+        ) {
+            auto image_subresource = vk::ImageSubresourceLayers()
+                .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                .setMipLevel(0)
+                .setBaseArrayLayer(0)
+                .setLayerCount(1);
+
+		    auto region = vk::BufferImageCopy()
+		        .setBufferOffset(0)
+		        .setBufferRowLength(0)
+		        .setBufferImageHeight(0)
+		        .setImageSubresource(image_subresource)
+		        .setImageOffset({0, 0, 0})
+		        .setImageExtent({width, height, 1});
+		    command_buffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
+	    }
     } // end helper namespace
 
     // Constructor
@@ -71,12 +93,12 @@ namespace glimpse::renderer {
         return {};
     }
 
-    std::expected<void, std::string> CommandRecorder::transition_image_layout_immediate(
+    std::expected<void, std::string> CommandRecorder::transition_image_layout(
         vk::raii::CommandBuffer& command_buffer, 
         const vk::raii::Image& image, 
         vk::ImageLayout old_layout, 
         vk::ImageLayout new_layout
-    ) {
+    ) const {
         auto subresource_range = vk::ImageSubresourceRange()
             .setAspectMask(vk::ImageAspectFlagBits::eColor)
             .setLevelCount(1)
@@ -247,6 +269,40 @@ namespace glimpse::renderer {
         });
         
         return std::move(command_buffer);
+    }
+
+    std::expected<void, std::string> CommandRecorder::upload_texture(
+        const vk::raii::Buffer& staging_buffer,
+        const vk::raii::Image& image, 
+        uint32_t width,
+        uint32_t height
+    ) const {
+        auto command_buffer = begin_single_command_time_commands();
+        auto transition_res = transition_image_layout(
+            command_buffer, 
+            image,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal
+        );
+        if (!transition_res) return std::unexpected(std::move(transition_res).error());
+        copy_to_buffer_image(
+            command_buffer,
+            staging_buffer,
+            image,
+            width,
+            height
+        );
+        transition_res = transition_image_layout(
+            command_buffer, 
+            image,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal
+        );
+        if (!transition_res) return std::unexpected(std::move(transition_res).error());
+
+        end_single_time_command(std::move(command_buffer));
+
+        return {};
     }
 
     void CommandRecorder::end_single_time_command(vk::raii::CommandBuffer&& command_buffer) const {
