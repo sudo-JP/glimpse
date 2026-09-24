@@ -12,9 +12,16 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
+# CMake work
+# Images
+include(cmake/FindImages.cmake)
+include(cmake/CompileKTX.cmake)
+find_images_file(IMAGE_FILES)
+compile_images(${IMAGE_FILES})
+
+# Slangs
 include(cmake/FindSlang.cmake)
 include(cmake/CompileSlang.cmake)
-
 find_slang_files(SLANG_FILES)
 compile_slangs(${SLANG_FILES})
 
@@ -23,9 +30,6 @@ add_executable(${PROJECT_NAME})
 target_compile_definitions(glimpse PRIVATE 
     SHADER_DIR="${CMAKE_BINARY_DIR}/shaders"
 )
-target_compile_definitions(glimpse PRIVATE 
-    WORLD_DIR="${CMAKE_CURRENT_LIST_DIR}/src/world"
-) 
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src
