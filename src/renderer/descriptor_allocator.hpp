@@ -19,8 +19,10 @@ namespace glimpse {
                 const std::vector<vk::raii::Buffer>& uniform_buffers,
                 const glimpse::renderer::Texture& texture
             );
-            //get_descriptor_set
 
+            const std::optional<
+                std::reference_wrapper<const vk::raii::DescriptorSet>
+            > get_descriptor_set(size_t index) const; 
         private:
             size_t m_max_frames_in_flight;
             std::reference_wrapper<const glimpse::renderer::VulkanContext> m_vk_ctx;

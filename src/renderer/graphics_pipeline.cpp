@@ -223,10 +223,4 @@ namespace glimpse::renderer {
     const vk::raii::DescriptorSetLayout& GraphicsPipeline::get_descriptor_set_layout() const {
         return m_descriptor_set_layout;
     }
-
-    template void glimpse::renderer::GraphicsPipeline::attach_resources<glimpse::renderer::MVP>(
-        size_t, 
-        const std::vector<vk::raii::Buffer>&,
-        const glimpse::renderer::Texture& 
-    );
 }
