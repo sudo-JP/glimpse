@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
-#include <print>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 #include <chrono>

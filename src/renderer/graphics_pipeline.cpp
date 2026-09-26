@@ -212,102 +212,16 @@ namespace glimpse::renderer {
     m_graphics_pipeline(std::move(graphics_pipeline))
     {}
 
-    template <typename T>
-    void GraphicsPipeline::attach_resources(
-        size_t max_frames_in_flight,
-        const std::vector<vk::raii::Buffer>& uniform_buffers,
-        const glimpse::renderer::Texture& texture
-    ) {
-        if (!m_descriptor_pool.has_value() && !m_descriptor_sets.has_value()) {
-            const auto& context = m_vk_ctx.get();
-            const auto& device = context.get_device();
-            // Pool creation
-            auto uniform_pool_size = vk::DescriptorPoolSize()
-                .setType(vk::DescriptorType::eUniformBuffer)
-                .setDescriptorCount(max_frames_in_flight);
-
-            auto sampler_pool_size = vk::DescriptorPoolSize()
-                .setType(vk::DescriptorType::eCombinedImageSampler)
-                .setDescriptorCount(max_frames_in_flight);
-
-            std::array<vk::DescriptorPoolSize, 2> pool_size = {
-                std::move(uniform_pool_size),
-                std::move(sampler_pool_size)
-            };
-            
-            auto pool_info = vk::DescriptorPoolCreateInfo()
-                .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
-                .setMaxSets(max_frames_in_flight)
-                .setPoolSizeCount(static_cast<uint32_t>(pool_size.size()))
-                .setPPoolSizes(pool_size.data());
-
-            auto descriptor_pool = vk::raii::DescriptorPool(device, pool_info);
-
-            std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight, *m_descriptor_set_layout);
-            auto descriptor_alloc_info = vk::DescriptorSetAllocateInfo()
-                .setDescriptorPool(descriptor_pool)
-                .setDescriptorSetCount(static_cast<uint32_t>(layouts.size()))
-                .setPSetLayouts(layouts.data());
-
-            auto descriptor_sets = device.allocateDescriptorSets(descriptor_alloc_info);
-            for (size_t i = 0; i < max_frames_in_flight; i++) {
-                // Uniforms 
-                auto descriptor_buffer_info = vk::DescriptorBufferInfo()
-                    .setBuffer(uniform_buffers[i])
-                    .setOffset(0)
-                    .setRange(sizeof(T));
-
-                auto write_uniform = vk::WriteDescriptorSet()
-                    .setDstSet(descriptor_sets[i])
-                    .setDstBinding(0)
-                    .setDstArrayElement(0)
-                    .setDescriptorCount(1)
-                    .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                    .setPBufferInfo(&descriptor_buffer_info);
-
-                // Texture stuff
-                const auto& texture_sampler = texture.get_texture_sampler();
-                const auto& texture_image_view = texture.get_texture_image_view();
-                auto image_info = vk::DescriptorImageInfo()
-                    .setSampler(texture_sampler)
-                    .setImageView(texture_image_view)
-                    .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-                auto write_sampler = vk::WriteDescriptorSet()
-                    .setDstSet(descriptor_sets[i])
-                    .setDstBinding(1)
-                    .setDstArrayElement(0)
-                    .setDescriptorCount(1)
-                    .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                    .setPImageInfo(&image_info);
-
-                std::array<vk::WriteDescriptorSet, 2> descriptor_write = {
-                    std::move(write_uniform),
-                    std::move(write_sampler)
-                };
-
-                device.updateDescriptorSets(descriptor_write, {});
-            }
-
-            m_descriptor_pool = std::move(descriptor_pool);
-            m_descriptor_sets = std::move(descriptor_sets);
-        }
-    }
-
     const vk::raii::Pipeline& GraphicsPipeline::get_graphics_pipeline() const {
         return m_graphics_pipeline;
     }
 
-    const std::optional<
-        std::reference_wrapper<const vk::raii::DescriptorSet>
-    > GraphicsPipeline::get_descriptor_set(size_t index) const {
-        if (!m_descriptor_sets.has_value()) return std::nullopt;
-        const auto& descriptor_sets = *m_descriptor_sets;
-        if (index >= descriptor_sets.size()) return std::nullopt;
-        return std::reference_wrapper{descriptor_sets[index]};
-    }
-
     const vk::raii::PipelineLayout& GraphicsPipeline::get_pipeline_layout() const {
         return m_pipeline_layout;
+    }
+
+    const vk::raii::DescriptorSetLayout& GraphicsPipeline::get_descriptor_set_layout() const {
+        return m_descriptor_set_layout;
     }
 
     template void glimpse::renderer::GraphicsPipeline::attach_resources<glimpse::renderer::MVP>(

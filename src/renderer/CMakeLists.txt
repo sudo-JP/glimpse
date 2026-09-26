@@ -9,4 +9,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     uniform_buffer.cpp
     utils.cpp
     texture.cpp
+    entity.cpp
+    descriptor_allocator.cpp
 )

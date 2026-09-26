@@ -39,6 +39,8 @@ namespace glimpse {
                 std::reference_wrapper<const vk::raii::DescriptorSet>
             > get_descriptor_set(size_t index) const;
 
+            const vk::raii::DescriptorSetLayout& get_descriptor_set_layout() const;
+
             const vk::raii::PipelineLayout& get_pipeline_layout() const;
         private:
             GraphicsPipeline(
@@ -51,10 +53,6 @@ namespace glimpse {
             vk::raii::DescriptorSetLayout m_descriptor_set_layout = nullptr;
             vk::raii::PipelineLayout m_pipeline_layout = nullptr; 
             vk::raii::Pipeline m_graphics_pipeline = nullptr;
-
-            // For uniforms
-            std::optional<vk::raii::DescriptorPool> m_descriptor_pool;
-            std::optional<std::vector<vk::raii::DescriptorSet>> m_descriptor_sets;
         };
     }
 }
