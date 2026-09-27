@@ -11,4 +11,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     texture.cpp
     entity.cpp
     descriptor_allocator.cpp
+    material.cpp
 )

@@ -15,19 +15,14 @@ namespace glimpse {
             );
 
             template <typename T>
-            void attach_resources(
+            std::vector<vk::raii::DescriptorSet> attach_resources(
                 const std::vector<vk::raii::Buffer>& uniform_buffers,
                 const glimpse::renderer::Texture& texture
             );
-
-            const std::optional<
-                std::reference_wrapper<const vk::raii::DescriptorSet>
-            > get_descriptor_set(size_t index) const; 
         private:
             size_t m_max_frames_in_flight;
             std::reference_wrapper<const glimpse::renderer::VulkanContext> m_vk_ctx;
             vk::raii::DescriptorPool m_descriptor_pool = nullptr;
-            std::vector<vk::raii::DescriptorSet> m_descriptor_sets;
         };
     }
 }

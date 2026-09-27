@@ -25,13 +25,6 @@ namespace glimpse {
                 const glimpse::renderer::VulkanSwapchain& swapchain
             );
 
-            template <typename T>
-            void attach_resources(
-                size_t max_frames_in_flight,
-                const std::vector<vk::raii::Buffer>& uniform_buffers,
-                const glimpse::renderer::Texture& texture
-            );
-
             // Getters
             const vk::raii::Pipeline& get_graphics_pipeline() const;
 

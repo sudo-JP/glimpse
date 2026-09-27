@@ -24,6 +24,13 @@ namespace glimpse::renderer {
 
         m_descriptor_pool = vk::raii::DescriptorPool(device, pool_info);
 
+    }
+
+    template <typename T>
+    std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
+        const std::vector<vk::raii::Buffer>& uniform_buffers,
+        const glimpse::renderer::Texture& texture
+    ) {
         const auto& layout = pipeline.get_descriptor_set_layout();
         std::vector<vk::DescriptorSetLayout> layouts(m_max_frames_in_flight, layout);
         auto alloc_info = vk::DescriptorSetAllocateInfo()
@@ -32,13 +39,7 @@ namespace glimpse::renderer {
             .setPSetLayouts(layouts.data());
 
         m_descriptor_sets = device.allocateDescriptorSets(alloc_info);
-    }
 
-    template <typename T>
-    void DescriptorAllocator::attach_resources(
-        const std::vector<vk::raii::Buffer>& uniform_buffers,
-        const glimpse::renderer::Texture& texture
-    ) {
         const auto& device = m_vk_ctx.get().get_device();
         for (size_t i = 0; i < m_max_frames_in_flight; ++i) {
             auto buffer_info = vk::DescriptorBufferInfo()
@@ -70,14 +71,7 @@ namespace glimpse::renderer {
         } 
     }
 
-    const std::optional<
-        std::reference_wrapper<const vk::raii::DescriptorSet>
-    > DescriptorAllocator::get_descriptor_set(size_t index) const {
-        if (index >= m_descriptor_sets.size()) return std::nullopt;
-        return std::reference_wrapper{m_descriptor_sets[index]};
-    }
-
-    template void glimpse::renderer::DescriptorAllocator::attach_resources<glimpse::renderer::MVP>( 
+    template std::vector<vk::raii::DescriptorSet> glimpse::renderer::DescriptorAllocator::attach_resources<glimpse::renderer::MVP>( 
         const std::vector<vk::raii::Buffer>&,
         const glimpse::renderer::Texture& 
     );
