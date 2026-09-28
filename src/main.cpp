@@ -1,7 +1,7 @@
-#include <cstdlib>
-#include <print>
 #include "renderer/renderer.hpp"
 #include <GLFW/glfw3.h>
+#include <cstdlib>
+#include <print>
 
 int main() {
     auto renderer_res = glimpse::renderer::Renderer::new_renderer();

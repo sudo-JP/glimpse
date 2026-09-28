@@ -6,25 +6,26 @@
 #include <string>
 
 namespace glimpse {
-    class Window {
-    public: 
-        // Constructor like rust cuz i hate this language
-        static std::expected<Window, std::string> new_window(
-            int width, int height, std::string title
-        );
+class Window {
+  public:
+    // Constructor like rust cuz i hate this language
+    static std::expected<Window, std::string> new_window(int width, int height,
+                                                         std::string title);
 
-        ~Window(); 
+    ~Window();
 
-        Window(Window&& other) noexcept;
-        Window& operator=(Window&& other) noexcept; 
+    Window(Window &&other) noexcept;
+    Window &operator=(Window &&other) noexcept;
 
-        Window(const Window&) = delete;
-        Window& operator=(const Window&) = delete;
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
 
-        GLFWwindow *get_window() const; 
-    private: 
-        static inline size_t m_ref_count = 0; 
-        Window(std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window);
-        std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> m_window{nullptr, glfwDestroyWindow};
-    };
-}
+    GLFWwindow *get_window() const;
+
+  private:
+    static inline size_t m_ref_count = 0;
+    Window(std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window);
+    std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> m_window{
+        nullptr, glfwDestroyWindow};
+};
+} // namespace glimpse
