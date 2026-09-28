@@ -2,8 +2,8 @@
 #include <GLFW/glfw3.h>
 
 namespace glimpse {
-std::expected<Window, std::string> Window::new_window(int width, int height,
-                                                      std::string title) {
+std::expected<Window, std::string>
+Window::new_window(int width, int height, std::string title) {
     if (m_ref_count == 0 && !glfwInit()) {
         return std::unexpected("cannot init glfw");
     }

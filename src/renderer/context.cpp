@@ -21,8 +21,8 @@
 namespace glimpse::renderer {
 namespace {
 // Validation layers
-std::expected<std::vector<const char *>, std::string>
-required_layers(const vk::raii::Context &context) {
+std::expected<std::vector<const char *>, std::string> required_layers(
+    const vk::raii::Context &context) {
 
     // validation layers
     const std::vector<char const *> validation_layers = {
@@ -32,13 +32,15 @@ required_layers(const vk::raii::Context &context) {
 
     auto layer_properties = context.enumerateInstanceLayerProperties();
     auto unsupported_layer_it = std::ranges::find_if(
-        required_layers, [&layer_properties](auto const &required_layer) {
-            return std::ranges::none_of(
-                layer_properties, [required_layer](auto const &layer_property) {
+        required_layers,
+        [&layer_properties](auto const &required_layer) {
+            return std::ranges::none_of(layer_properties,
+                [required_layer](auto const &layer_property) {
                     std::string_view layer_name = layer_property.layerName;
                     return layer_name.compare(required_layer) == 0;
                 });
-        });
+        }
+    );
 
     if (unsupported_layer_it != required_layers.end()) {
         return std::unexpected("required layer not supported: " +
@@ -52,15 +54,16 @@ required_layers(const vk::raii::Context &context) {
 std::expected<std::vector<const char *>, std::string>
 required_extensions(const vk::raii::Context &context, const bool debug) {
     uint32_t glfw_extension_count = 0;
-    auto glfw_extensions =
-        glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     if (!glfw_extensions) {
         return std::unexpected("glfwGetRequiredInstanceExtensions failed");
     }
 
-    std::vector extensions(glfw_extensions,
-                           glfw_extensions + glfw_extension_count);
+    std::vector extensions(
+        glfw_extensions,
+        glfw_extensions + glfw_extension_count
+    );
     if (debug) {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
@@ -84,18 +87,24 @@ required_extensions(const vk::raii::Context &context, const bool debug) {
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
     vk::DebugUtilsMessageTypeFlagsEXT type,
-    const vk::DebugUtilsMessengerCallbackDataEXT *p_callback_data, void *) {
+    const vk::DebugUtilsMessengerCallbackDataEXT *p_callback_data,
+    void *
+) {
     if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError ||
         severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
-        std::println(stderr, "validation layer: type {} msg: {}",
-                     vk::to_string(type), p_callback_data->pMessage);
+        std::println(
+            stderr,
+            "validation layer: type {} msg: {}",
+            vk::to_string(type),
+            p_callback_data->pMessage
+        );
     }
     return vk::False;
 }
 
 // Debug messenger
-vk::raii::DebugUtilsMessengerEXT
-setup_debug_messenger(const vk::raii::Instance &instance) {
+vk::raii::DebugUtilsMessengerEXT setup_debug_messenger(
+    const vk::raii::Instance &instance) {
     vk::DebugUtilsMessageSeverityFlagsEXT severity_flags(
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
@@ -104,12 +113,11 @@ setup_debug_messenger(const vk::raii::Instance &instance) {
         vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 
-    auto debug_utils_messenger_create_info_ext =
-        vk::DebugUtilsMessengerCreateInfoEXT()
-            .setFlags(vk::DebugUtilsMessengerCreateFlagsEXT())
-            .setMessageSeverity(severity_flags)
-            .setMessageType(message_type_flags)
-            .setPfnUserCallback(&debug_callback);
+    auto debug_utils_messenger_create_info_ext = vk::DebugUtilsMessengerCreateInfoEXT()
+        .setFlags(vk::DebugUtilsMessengerCreateFlagsEXT())
+        .setMessageSeverity(severity_flags)
+        .setMessageType(message_type_flags)
+        .setPfnUserCallback(&debug_callback);
 
     return instance.createDebugUtilsMessengerEXT(
         debug_utils_messenger_create_info_ext);
@@ -126,36 +134,35 @@ bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
 
     // Queue family support graphics operations
     auto queue_families = physical_device.getQueueFamilyProperties();
-    bool support_graphics =
-        std::ranges::any_of(queue_families, [](auto const &qfq) {
+    bool support_graphics = std::ranges::any_of(
+        queue_families,
+        [](auto const &qfq) {
             return !!(qfq.queueFlags & vk::QueueFlagBits::eGraphics);
-        });
+        }
+    );
     std::vector<const char *> required_device_extension = {
         vk::KHRSwapchainExtensionName};
 
-    auto available_device_extensions =
-        physical_device.enumerateDeviceExtensionProperties();
+    auto available_device_extensions = physical_device.enumerateDeviceExtensionProperties();
     bool supports_all_required_extensions = std::ranges::all_of(
         required_device_extension,
         [&available_device_extensions](auto const &required_device_extension) {
-            return std::ranges::any_of(
-                available_device_extensions,
+            return std::ranges::any_of(available_device_extensions,
                 [required_device_extension](
                     auto const &available_device_extension) {
-                    std::string_view extension_name =
-                        available_device_extension.extensionName;
+                    std::string_view extension_name = available_device_extension.extensionName;
                     return extension_name.compare(required_device_extension) ==
                            0;
                 });
-        });
+        }
+    );
 
-    auto features = physical_device.template getFeatures2<
-        vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features,
-        vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+    auto features = physical_device.template getFeatures2<vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
+            vk::PhysicalDeviceVulkan13Features,
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
 
-    bool supports_required_features =
-        features.template get<vk::PhysicalDeviceFeatures2>()
+    bool supports_required_features = features.template get<vk::PhysicalDeviceFeatures2>()
             .features.samplerAnisotropy &&
         features.template get<vk::PhysicalDeviceVulkan11Features>()
             .shaderDrawParameters &&
@@ -176,8 +183,8 @@ bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
 }
 
 // Pick out physical device
-std::expected<vk::raii::PhysicalDevice, std::string>
-pick_physical_device(const vk::raii::Instance &instance) {
+std::expected<vk::raii::PhysicalDevice, std::string> pick_physical_device(
+    const vk::raii::Instance &instance) {
     auto physical_devices = instance.enumeratePhysicalDevices();
     if (physical_devices.empty()) {
         return std::unexpected("failed to find GPUs with vulkan support");
@@ -190,17 +197,18 @@ pick_physical_device(const vk::raii::Instance &instance) {
 }
 
 std::expected<std::tuple<vk::raii::Device, vk::raii::Queue, uint32_t>,
-              std::string>
-create_logical_device(const vk::raii::PhysicalDevice &physical_device,
-                      const vk::SurfaceKHR &surface) {
+    std::string>
+create_logical_device(
+    const vk::raii::PhysicalDevice &physical_device,
+    const vk::SurfaceKHR &surface
+) {
     // Queue stuff
-    std::vector<vk::QueueFamilyProperties> queue_family_properties =
-        physical_device.getQueueFamilyProperties();
+    std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
 
     std::optional<uint32_t> queue_idx;
 
     for (uint32_t qfq_idx = 0; qfq_idx < queue_family_properties.size();
-         qfq_idx++) {
+        qfq_idx++) {
         auto queue_flag = queue_family_properties[qfq_idx].queueFlags;
         if ((queue_flag & vk::QueueFlagBits::eGraphics) &&
             physical_device.getSurfaceSupportKHR(qfq_idx, surface)) {
@@ -216,17 +224,17 @@ create_logical_device(const vk::raii::PhysicalDevice &physical_device,
     float queue_priority = 1.0f;
     int queue_count = 1;
     auto device_queue_create_info = vk::DeviceQueueCreateInfo()
-                                        .setFlags(vk::DeviceQueueCreateFlags())
-                                        .setQueueFamilyIndex(graphics_queue_idx)
-                                        .setQueueCount(queue_count)
-                                        .setPQueuePriorities(&queue_priority);
+        .setFlags(vk::DeviceQueueCreateFlags())
+        .setQueueFamilyIndex(graphics_queue_idx)
+        .setQueueCount(queue_count)
+        .setPQueuePriorities(&queue_priority);
 
     vk::PhysicalDeviceFeatures device_features;
 
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
-                       vk::PhysicalDeviceVulkan11Features,
-                       vk::PhysicalDeviceVulkan13Features,
-                       vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
+        vk::PhysicalDeviceVulkan11Features,
+        vk::PhysicalDeviceVulkan13Features,
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
         feature_chain = {
             vk::PhysicalDeviceFeatures2{}.setFeatures(
                 vk::PhysicalDeviceFeatures{}.setSamplerAnisotropy(true)),
@@ -240,39 +248,43 @@ create_logical_device(const vk::raii::PhysicalDevice &physical_device,
         vk::KHRSwapchainExtensionName};
 
     int queue_create_info_count = 1;
-    auto device_create_info =
-        vk::DeviceCreateInfo()
-            .setPNext(&feature_chain.get<vk::PhysicalDeviceFeatures2>())
-            .setQueueCreateInfoCount(queue_create_info_count)
-            .setPQueueCreateInfos(&device_queue_create_info)
-            .setEnabledExtensionCount(
+    auto device_create_info = vk::DeviceCreateInfo()
+        .setPNext(&feature_chain.get<vk::PhysicalDeviceFeatures2>())
+        .setQueueCreateInfoCount(queue_create_info_count)
+        .setPQueueCreateInfos(&device_queue_create_info)
+        .setEnabledExtensionCount(
                 static_cast<uint32_t>(required_device_extension.size()))
             .setPpEnabledExtensionNames(required_device_extension.data());
 
     vk::raii::Device device(physical_device, device_create_info);
-    vk::raii::Queue graphics_queue =
-        vk::raii::Queue(device, graphics_queue_idx, 0);
-    return std::tuple{std::move(device), std::move(graphics_queue),
-                      graphics_queue_idx};
+    vk::raii::Queue graphics_queue = vk::raii::Queue(device, graphics_queue_idx, 0);
+    return std::tuple{std::move(device),
+        std::move(graphics_queue),
+        graphics_queue_idx};
 }
 } // namespace
 
-std::expected<VulkanContext, std::string>
-VulkanContext::new_vk_context(const ContextAppInfo &app_context,
-                              const ContextAppInfo &engine_context,
-                              const Window &window, const bool debug_mode) {
+std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
+    const ContextAppInfo &app_context,
+    const ContextAppInfo &engine_context,
+    const Window &window,
+    const bool debug_mode
+) {
     const char *app_name_c = app_context.name.c_str();
     const char *engine_name_c = engine_context.name.c_str();
-    auto app_info =
-        vk::ApplicationInfo()
-            .setPApplicationName(app_name_c)
-            .setApplicationVersion(VK_MAKE_VERSION(app_context.version.major,
-                                                   app_context.version.minor,
-                                                   app_context.version.patch))
+    auto app_info = vk::ApplicationInfo()
+        .setPApplicationName(app_name_c)
+        .setApplicationVersion(VK_MAKE_VERSION(
+            app_context.version.major,
+            app_context.version.minor,
+            app_context.version.patch
+        ))
             .setPEngineName(engine_name_c)
-            .setEngineVersion(VK_MAKE_VERSION(engine_context.version.major,
-                                              engine_context.version.minor,
-                                              engine_context.version.patch))
+            .setEngineVersion(VK_MAKE_VERSION(
+                engine_context.version.major,
+                engine_context.version.minor,
+                engine_context.version.patch
+            ))
             .setApiVersion(vk::ApiVersion14);
 
     try {
@@ -295,12 +307,11 @@ VulkanContext::new_vk_context(const ContextAppInfo &app_context,
             layers = std::move(validation_result).value();
         }
 
-        auto create_info =
-            vk::InstanceCreateInfo()
-                .setPApplicationInfo(&app_info)
-                .setEnabledLayerCount(static_cast<uint32_t>(layers.size()))
-                .setPpEnabledLayerNames(layers.data())
-                .setEnabledExtensionCount(
+        auto create_info = vk::InstanceCreateInfo()
+            .setPApplicationInfo(&app_info)
+            .setEnabledLayerCount(static_cast<uint32_t>(layers.size()))
+            .setPpEnabledLayerNames(layers.data())
+            .setEnabledExtensionCount(
                     static_cast<uint32_t>(glfw_extensions.size()))
                 .setPpEnabledExtensionNames(glfw_extensions.data());
 
@@ -309,8 +320,10 @@ VulkanContext::new_vk_context(const ContextAppInfo &app_context,
         // Surface setup
         vk::raii::SurfaceKHR surface = nullptr;
         VkSurfaceKHR _surface;
-        if (glfwCreateWindowSurface(*instance, window.get_window(), nullptr,
-                                    &_surface) != 0) {
+        if (glfwCreateWindowSurface(*instance,
+                window.get_window(),
+                nullptr,
+                &_surface) != 0) {
             return std::unexpected("failed to create window surface");
         }
         surface = vk::raii::SurfaceKHR(instance, _surface);
@@ -326,24 +339,26 @@ VulkanContext::new_vk_context(const ContextAppInfo &app_context,
         if (!device_result)
             return std::unexpected(std::move(device_result).error());
 
-        auto [device, graphics_queue, graphics_queue_idx] =
-            std::move(device_result).value();
+        auto [device, graphics_queue, graphics_queue_idx] = std::move(device_result).value();
 
-        std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger =
-            std::nullopt;
+        std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger = std::nullopt;
 
         if (debug_mode) {
             debug_messenger = setup_debug_messenger(instance);
         }
-        ContextInstance context_instance{
-            std::move(context), std::move(instance), std::move(surface)};
+        ContextInstance context_instance{std::move(context),
+            std::move(instance),
+            std::move(surface)};
         DeviceResources device_resources{std::move(phys_device),
-                                         std::move(device),
-                                         std::move(graphics_queue)};
+            std::move(device),
+            std::move(graphics_queue)};
 
-        return VulkanContext(std::move(context_instance),
-                             std::move(device_resources),
-                             std::move(debug_messenger), graphics_queue_idx);
+        return VulkanContext(
+            std::move(context_instance),
+            std::move(device_resources),
+            std::move(debug_messenger),
+            graphics_queue_idx
+        );
     } catch (const vk::SystemError &err) {
         return std::unexpected(err.what());
     }
@@ -351,9 +366,11 @@ VulkanContext::new_vk_context(const ContextAppInfo &app_context,
 }
 
 VulkanContext::VulkanContext(
-    ContextInstance context_instance, DeviceResources device_resources,
+    ContextInstance context_instance,
+    DeviceResources device_resources,
     std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger,
-    uint32_t graphics_queue_index)
+    uint32_t graphics_queue_index
+)
     // The actual init
     : m_context(std::move(context_instance.context)),
       m_instance(std::move(context_instance.instance)),

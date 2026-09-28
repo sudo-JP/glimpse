@@ -25,10 +25,12 @@ namespace renderer {
  * */
 class VulkanContext {
   public:
-    static std::expected<VulkanContext, std::string>
-    new_vk_context(const ContextAppInfo &app_context,
-                   const ContextAppInfo &engine_context, const Window &window,
-                   const bool debug_mode);
+    static std::expected<VulkanContext, std::string> new_vk_context(
+        const ContextAppInfo &app_context,
+        const ContextAppInfo &engine_context,
+        const Window &window,
+        const bool debug_mode
+    );
 
     // getters
     const vk::raii::PhysicalDevice &get_physical_device() const;
@@ -51,9 +53,11 @@ class VulkanContext {
     };
 
     VulkanContext(
-        ContextInstance context_instance, DeviceResources device_resources,
+        ContextInstance context_instance,
+        DeviceResources device_resources,
         std::optional<vk::raii::DebugUtilsMessengerEXT> debug_messenger,
-        uint32_t graphics_queue_index);
+        uint32_t graphics_queue_index
+    );
     vk::raii::Context m_context;
     vk::raii::Instance m_instance = nullptr;
     vk::raii::PhysicalDevice m_physical_device;

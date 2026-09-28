@@ -17,8 +17,11 @@ struct ShaderStageConfig {
 class GraphicsPipeline {
   public:
     static std::expected<GraphicsPipeline, std::string> new_graphics_pipeline(
-        const ShaderStageConfig &shader_config, size_t max_frames_in_flight,
-        const VulkanContext &context, const VulkanSwapchain &swapchain);
+        const ShaderStageConfig &shader_config,
+        size_t max_frames_in_flight,
+        const VulkanContext &context,
+        const VulkanSwapchain &swapchain
+    );
 
     // Getters
     const vk::raii::Pipeline &get_graphics_pipeline() const;
@@ -31,10 +34,12 @@ class GraphicsPipeline {
     const vk::raii::PipelineLayout &get_pipeline_layout() const;
 
   private:
-    GraphicsPipeline(const VulkanContext &context,
-                     vk::raii::DescriptorSetLayout descriptor_set_layout,
-                     vk::raii::PipelineLayout pipeline_layout,
-                     vk::raii::Pipeline graphics_pipeline);
+    GraphicsPipeline(
+        const VulkanContext &context,
+        vk::raii::DescriptorSetLayout descriptor_set_layout,
+        vk::raii::PipelineLayout pipeline_layout,
+        vk::raii::Pipeline graphics_pipeline
+    );
     std::reference_wrapper<const VulkanContext> m_vk_ctx;
     vk::raii::DescriptorSetLayout m_descriptor_set_layout = nullptr;
     vk::raii::PipelineLayout m_pipeline_layout = nullptr;

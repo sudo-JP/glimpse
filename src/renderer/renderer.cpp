@@ -19,8 +19,7 @@
 namespace glimpse::renderer {
 std::expected<Renderer, std::string> Renderer::new_renderer() {
     constexpr int width = 1920, height = 1080;
-    auto window_res =
-        Window::new_window(width, height, std::move("glimpse of..."));
+    auto window_res = Window::new_window(width, height, std::move("glimpse of..."));
     if (!window_res)
         return std::unexpected(std::move(window_res).error());
     auto window = std::move(window_res).value();
@@ -30,14 +29,12 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
 
     glimpse::ContextAppInfo engine_ctx{"engine", version};
 
-    auto vk_ctx_res =
-        VulkanContext::new_vk_context(app_info, engine_ctx, window, false);
+    auto vk_ctx_res = VulkanContext::new_vk_context(app_info, engine_ctx, window, false);
     if (!vk_ctx_res) {
         return std::unexpected(std::move(vk_ctx_res).error());
     }
 
-    auto context =
-        std::make_unique<VulkanContext>(std::move(vk_ctx_res).value());
+    auto context = std::make_unique<VulkanContext>(std::move(vk_ctx_res).value());
 
     const auto &vk_ctx = *context;
     const auto &device = vk_ctx.get_device();
@@ -54,45 +51,66 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
 
     const auto &swapchain_images = swapchain.get_swapchain_images();
     for (size_t i = 0; i < swapchain_images.size(); i++) {
-        render_finished_semaphores.emplace_back(device,
-                                                vk::SemaphoreCreateInfo());
+        render_finished_semaphores.emplace_back(
+            device,
+            vk::SemaphoreCreateInfo()
+        );
     }
 
     for (size_t i = 0; i < m_max_frames_in_flight; i++) {
-        present_complete_semaphores.emplace_back(device,
-                                                 vk::SemaphoreCreateInfo());
+        present_complete_semaphores.emplace_back(
+            device,
+            vk::SemaphoreCreateInfo()
+        );
         in_flight_fences.emplace_back(
-            device, vk::FenceCreateInfo{vk::FenceCreateFlagBits::eSignaled});
+            device,
+            vk::FenceCreateInfo{vk::FenceCreateFlagBits::eSignaled}
+        );
     }
 
     auto pipeline_res = GraphicsPipeline::new_graphics_pipeline(
-        {std::string(SHADER_DIR) + "/sandbox.spv"}, m_max_frames_in_flight,
-        vk_ctx, swapchain);
+        {std::string(SHADER_DIR) + "/sandbox.spv"},
+        m_max_frames_in_flight,
+        vk_ctx,
+        swapchain
+    );
     if (!pipeline_res)
         return std::unexpected(std::move(pipeline_res).error());
     auto pipeline = std::move(pipeline_res).value();
 
-    auto ubo_res =
-        UniformBuffer<MVP>::new_uniform_buffer(m_max_frames_in_flight, vk_ctx);
+    auto ubo_res = UniformBuffer<MVP>::new_uniform_buffer(m_max_frames_in_flight, vk_ctx);
     if (!ubo_res)
         return std::unexpected(std::move(ubo_res).error());
     auto ubo = std::move(ubo_res).value();
     auto texture_res = Texture::new_texture(
-        std::string(SHADER_DIR) + "/swirl.ktx2", command_recorder, *context);
+        std::string(SHADER_DIR) + "/swirl.ktx2",
+        command_recorder,
+        *context
+    );
     if (!texture_res)
         return std::unexpected(std::move(texture_res).error());
     auto texture = std::move(texture_res).value();
 
-    pipeline.attach_resources<MVP>(m_max_frames_in_flight,
-                                   ubo.get_uniform_buffers(), texture);
+    pipeline.attach_resources<MVP>(
+        m_max_frames_in_flight,
+        ubo.get_uniform_buffers(),
+        texture
+    );
 
-    VulkanCore core{std::move(context), std::move(swapchain),
-                    std::move(command_recorder), std::move(pipeline)};
+    VulkanCore core{std::move(context),
+        std::move(swapchain),
+        std::move(command_recorder),
+        std::move(pipeline)};
     VulkanSyncPrimitives sync_primitives{std::move(present_complete_semaphores),
-                                         std::move(render_finished_semaphores),
-                                         std::move(in_flight_fences)};
-    return Renderer(std::move(core), std::move(sync_primitives), std::move(ubo),
-                    std::move(texture), std::move(window));
+        std::move(render_finished_semaphores),
+        std::move(in_flight_fences)};
+    return Renderer(
+        std::move(core),
+        std::move(sync_primitives),
+        std::move(ubo),
+        std::move(texture),
+        std::move(window)
+    );
 }
 
 void Renderer::run() {
@@ -112,8 +130,11 @@ void Renderer::run() {
 
 std::expected<void, std::string> Renderer::draw_frame() {
     const auto &device = m_vulkan_context->get_device();
-    auto fence_res = device.waitForFences(*m_in_flight_fences[m_frame_index],
-                                          vk::True, UINT64_MAX);
+    auto fence_res = device.waitForFences(
+        *m_in_flight_fences[m_frame_index],
+        vk::True,
+        UINT64_MAX
+    );
     if (fence_res != vk::Result::eSuccess)
         return std::unexpected("failed to wait for fence");
 
@@ -145,8 +166,12 @@ std::expected<void, std::string> Renderer::draw_frame() {
         {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
         {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
     const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
-    auto mesh_res = Mesh::new_mesh(vertices, indices, *m_vulkan_context,
-                                   m_command_recorder);
+    auto mesh_res = Mesh::new_mesh(
+        vertices,
+        indices,
+        *m_vulkan_context,
+        m_command_recorder
+    );
 
     if (!mesh_res)
         return std::unexpected(std::move(mesh_res).error());
@@ -157,24 +182,36 @@ std::expected<void, std::string> Renderer::draw_frame() {
     static auto start_time = std::chrono::high_resolution_clock::now();
     auto current_time = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                     current_time - start_time)
+        current_time - start_time)
                      .count();
     const auto &swapchain_extent = m_swapchain.get_extent();
-    MVP mvp{.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                                 glm::vec3(0.0f, 0.0f, 1.0f)),
-            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f),
-                                glm::vec3(0.0f, 0.0f, 0.0f),
-                                glm::vec3(0.0f, 0.0f, 1.0f)),
-            .proj = glm::perspective(
-                glm::radians(45.0f),
-                static_cast<float>(swapchain_extent.width) /
-                    static_cast<float>(swapchain_extent.height),
-                0.1f, 10.0f)};
+    MVP mvp{.model = glm::rotate(
+        glm::mat4(1.0f),
+        time * glm::radians(90.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    ),
+        .view = glm::lookAt(
+            glm::vec3(2.0f, 2.0f, 2.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        ),
+        .proj = glm::perspective(
+            glm::radians(45.0f),
+            static_cast<float>(swapchain_extent.width) /
+                static_cast<float>(swapchain_extent.height),
+            0.1f,
+            10.0f
+        )};
     m_uniform_buffer.update(m_frame_index, mvp);
 
     // Command buffer
     auto err = m_command_recorder.record_command_buffer(
-        image_idx, m_frame_index, m_swapchain, m_pipeline, mesh);
+        image_idx,
+        m_frame_index,
+        m_swapchain,
+        m_pipeline,
+        mesh
+    );
     if (!err)
         return std::unexpected(std::move(err).error());
 
@@ -190,17 +227,15 @@ std::expected<void, std::string> Renderer::draw_frame() {
 void Renderer::submit() {
     vk::PipelineStageFlags wait_destination_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    const auto &command_buffer =
-        m_command_recorder.get_command_buffer(m_frame_index);
-    const auto submit_info =
-        vk::SubmitInfo()
-            .setWaitSemaphoreCount(1)
-            .setPWaitSemaphores(&*m_present_complete_semaphores[m_frame_index])
-            .setPWaitDstStageMask(&wait_destination_stage_mask)
-            .setCommandBufferCount(1)
-            .setPCommandBuffers(&*command_buffer)
-            .setSignalSemaphoreCount(1)
-            .setPSignalSemaphores(
+    const auto &command_buffer = m_command_recorder.get_command_buffer(m_frame_index);
+    const auto submit_info = vk::SubmitInfo()
+        .setWaitSemaphoreCount(1)
+        .setPWaitSemaphores(&*m_present_complete_semaphores[m_frame_index])
+        .setPWaitDstStageMask(&wait_destination_stage_mask)
+        .setCommandBufferCount(1)
+        .setPCommandBuffers(&*command_buffer)
+        .setSignalSemaphoreCount(1)
+        .setPSignalSemaphores(
                 &*m_render_finished_semaphores[m_frame_index]);
 
     const auto &queue = m_vulkan_context->get_queue();
@@ -209,13 +244,12 @@ void Renderer::submit() {
 
 std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
     const auto &swapchain = m_swapchain.get_swapchain();
-    const auto present_info_khr =
-        vk::PresentInfoKHR()
-            .setWaitSemaphoreCount(1)
-            .setPWaitSemaphores(&*m_render_finished_semaphores[m_frame_index])
-            .setSwapchainCount(1)
-            .setPSwapchains(&*swapchain)
-            .setPImageIndices(&image_idx);
+    const auto present_info_khr = vk::PresentInfoKHR()
+        .setWaitSemaphoreCount(1)
+        .setPWaitSemaphores(&*m_render_finished_semaphores[m_frame_index])
+        .setSwapchainCount(1)
+        .setPSwapchains(&*swapchain)
+        .setPImageIndices(&image_idx);
 
     const auto &queue = m_vulkan_context->get_queue();
     auto result = queue.presentKHR(present_info_khr);
@@ -231,9 +265,13 @@ std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
     return {};
 }
 
-Renderer::Renderer(VulkanCore core, VulkanSyncPrimitives sync_primitives,
-                   UniformBuffer<MVP> uniform_buffer, Texture texture,
-                   Window window)
+Renderer::Renderer(
+    VulkanCore core,
+    VulkanSyncPrimitives sync_primitives,
+    UniformBuffer<MVP> uniform_buffer,
+    Texture texture,
+    Window window
+)
     : m_uniform_buffer(std::move(uniform_buffer)),
       m_texture(std::move(texture)),
       m_vulkan_context(std::move(core.vulkan_context)),

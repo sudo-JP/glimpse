@@ -2,8 +2,10 @@
 #include <memory>
 
 namespace glimpse::renderer {
-Material::Material(std::shared_ptr<const Texture> texture,
-                   std::shared_ptr<const GraphicsPipeline> pipeline)
+Material::Material(
+    std::shared_ptr<const Texture> texture,
+    std::shared_ptr<const GraphicsPipeline> pipeline
+)
     : m_texture(std::move(texture)), m_pipeline(std::move(pipeline)) {}
 
 const vk::raii::DescriptorSetLayout &

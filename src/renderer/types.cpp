@@ -12,20 +12,20 @@ vk::VertexInputBindingDescription VulkanVertex::get_binding_description() {
 std::array<vk::VertexInputAttributeDescription, 3>
 VulkanVertex::get_attribute_descriptions() {
     auto pos = vk::VertexInputAttributeDescription()
-                   .setLocation(0)
-                   .setBinding(0)
-                   .setFormat(vk::Format::eR32G32Sfloat)
-                   .setOffset(offsetof(VulkanVertex, pos));
+        .setLocation(0)
+        .setBinding(0)
+        .setFormat(vk::Format::eR32G32Sfloat)
+        .setOffset(offsetof(VulkanVertex, pos));
     auto color = vk::VertexInputAttributeDescription()
-                     .setLocation(1)
-                     .setBinding(0)
-                     .setFormat(vk::Format::eR32G32B32Sfloat)
-                     .setOffset(offsetof(VulkanVertex, color));
+        .setLocation(1)
+        .setBinding(0)
+        .setFormat(vk::Format::eR32G32B32Sfloat)
+        .setOffset(offsetof(VulkanVertex, color));
     auto texture = vk::VertexInputAttributeDescription()
-                       .setLocation(2)
-                       .setBinding(0)
-                       .setFormat(vk::Format::eR32G32Sfloat)
-                       .setOffset(offsetof(VulkanVertex, tex_coord));
+        .setLocation(2)
+        .setBinding(0)
+        .setFormat(vk::Format::eR32G32Sfloat)
+        .setOffset(offsetof(VulkanVertex, tex_coord));
     return {std::move(pos), std::move(color), std::move(texture)};
 }
 } // namespace glimpse::renderer

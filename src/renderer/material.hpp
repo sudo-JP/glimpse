@@ -7,8 +7,10 @@ namespace glimpse {
 namespace renderer {
 class Material {
   public:
-    Material(std::shared_ptr<const Texture> texture,
-             std::shared_ptr<const GraphicsPipeline> pipeline);
+    Material(
+        std::shared_ptr<const Texture> texture,
+        std::shared_ptr<const GraphicsPipeline> pipeline
+    );
 
     // getters
     const vk::raii::DescriptorSetLayout &get_descriptor_set_layout() const;

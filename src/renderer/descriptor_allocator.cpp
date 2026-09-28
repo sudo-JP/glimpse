@@ -3,22 +3,27 @@
 
 namespace glimpse::renderer {
 
-DescriptorAllocator::DescriptorAllocator(const VulkanContext &context,
-                                         const GraphicsPipeline &pipeline,
-                                         size_t max_frames_in_flight)
+DescriptorAllocator::DescriptorAllocator(
+    const VulkanContext &context,
+    const GraphicsPipeline &pipeline,
+    size_t max_frames_in_flight
+)
     : m_max_frames_in_flight(max_frames_in_flight), m_vk_ctx(context) {
     const auto &device = context.get_device();
     std::array<vk::DescriptorPoolSize, 2> pool_sizes = {
-        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer,
-                               static_cast<uint32_t>(m_max_frames_in_flight)),
-        vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler,
-                               static_cast<uint32_t>(m_max_frames_in_flight))};
+        vk::DescriptorPoolSize(
+            vk::DescriptorType::eUniformBuffer,
+            static_cast<uint32_t>(m_max_frames_in_flight)
+        ),
+        vk::DescriptorPoolSize(
+            vk::DescriptorType::eCombinedImageSampler,
+            static_cast<uint32_t>(m_max_frames_in_flight)
+        )};
 
-    auto pool_info =
-        vk::DescriptorPoolCreateInfo()
-            .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
-            .setMaxSets(static_cast<uint32_t>(m_max_frames_in_flight))
-            .setPoolSizes(pool_sizes);
+    auto pool_info = vk::DescriptorPoolCreateInfo()
+        .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
+        .setMaxSets(static_cast<uint32_t>(m_max_frames_in_flight))
+        .setPoolSizes(pool_sizes);
 
     m_descriptor_pool = vk::raii::DescriptorPool(device, pool_info);
 }
@@ -26,51 +31,50 @@ DescriptorAllocator::DescriptorAllocator(const VulkanContext &context,
 template <typename T>
 std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
     const std::vector<vk::raii::Buffer> &uniform_buffers,
-    const Material &material) {
+    const Material &material
+) {
     const auto &layout = material.get_descriptor_set_layout();
     const auto &texture = material.get_texture();
 
-    std::vector<vk::DescriptorSetLayout> layouts(m_max_frames_in_flight,
-                                                 layout);
-    auto alloc_info =
-        vk::DescriptorSetAllocateInfo()
-            .setDescriptorPool(m_descriptor_pool)
-            .setDescriptorSetCount(static_cast<uint32_t>(layouts.size()))
-            .setPSetLayouts(layouts.data());
+    std::vector<vk::DescriptorSetLayout> layouts(
+        m_max_frames_in_flight,
+        layout
+    );
+    auto alloc_info = vk::DescriptorSetAllocateInfo()
+        .setDescriptorPool(m_descriptor_pool)
+        .setDescriptorSetCount(static_cast<uint32_t>(layouts.size()))
+        .setPSetLayouts(layouts.data());
 
     const auto &device = m_vk_ctx.get().get_device();
     auto descriptor_sets = device.allocateDescriptorSets(alloc_info);
 
     for (size_t i = 0; i < m_max_frames_in_flight; ++i) {
         auto buffer_info = vk::DescriptorBufferInfo()
-                               .setBuffer(*uniform_buffers[i])
-                               .setOffset(0)
-                               .setRange(sizeof(T));
+            .setBuffer(*uniform_buffers[i])
+            .setOffset(0)
+            .setRange(sizeof(T));
 
-        auto write_uniform =
-            vk::WriteDescriptorSet()
-                .setDstSet(*descriptor_sets[i])
-                .setDstBinding(0)
-                .setDescriptorCount(1)
-                .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                .setPBufferInfo(&buffer_info);
+        auto write_uniform = vk::WriteDescriptorSet()
+            .setDstSet(*descriptor_sets[i])
+            .setDstBinding(0)
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+            .setPBufferInfo(&buffer_info);
 
-        auto image_info =
-            vk::DescriptorImageInfo()
-                .setSampler(texture.get_texture_sampler())
-                .setImageView(texture.get_texture_image_view())
-                .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        auto image_info = vk::DescriptorImageInfo()
+            .setSampler(texture.get_texture_sampler())
+            .setImageView(texture.get_texture_image_view())
+            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
-        auto write_sampler =
-            vk::WriteDescriptorSet()
-                .setDstSet(*descriptor_sets[i])
-                .setDstBinding(1)
-                .setDescriptorCount(1)
-                .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                .setPImageInfo(&image_info);
+        auto write_sampler = vk::WriteDescriptorSet()
+            .setDstSet(*descriptor_sets[i])
+            .setDstBinding(1)
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+            .setPImageInfo(&image_info);
 
         std::array<vk::WriteDescriptorSet, 2> writes = {write_uniform,
-                                                        write_sampler};
+            write_sampler};
         device.updateDescriptorSets(writes, {});
     }
 
@@ -79,5 +83,7 @@ std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
 
 template std::vector<vk::raii::DescriptorSet>
 DescriptorAllocator::attach_resources<MVP>(
-    const std::vector<vk::raii::Buffer> &, const Material &material);
+    const std::vector<vk::raii::Buffer> &,
+    const Material &material
+);
 } // namespace glimpse::renderer

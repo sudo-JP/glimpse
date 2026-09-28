@@ -10,7 +10,9 @@ Entity<T> EntityBuilder<T>::build(DescriptorAllocator &descriptor_allocator) {
     const auto &layout = m_material->get_descriptor_set_layout();
 
     descriptor_allocator.attach_resources<T>(
-        m_uniform_buffer.get_uniform_buffers(), m_material);
+        m_uniform_buffer.get_uniform_buffers(),
+        m_material
+    );
     return Entity<T>(
 
     );

@@ -35,8 +35,13 @@ class Renderer {
         std::vector<vk::raii::Semaphore> render_finished_semaphores;
         std::vector<vk::raii::Fence> in_flight_fences;
     };
-    Renderer(VulkanCore core, VulkanSyncPrimitives sync_primitives,
-             UniformBuffer<MVP> uniform_buffer, Texture texture, Window window);
+    Renderer(
+        VulkanCore core,
+        VulkanSyncPrimitives sync_primitives,
+        UniformBuffer<MVP> uniform_buffer,
+        Texture texture,
+        Window window
+    );
 
     void submit();
     std::expected<void, std::string> present(uint32_t image_idx);
