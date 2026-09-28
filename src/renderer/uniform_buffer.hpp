@@ -13,11 +13,11 @@ template <typename T> class UniformBuffer {
   public:
     static std::expected<UniformBuffer<T>, std::string> new_uniform_buffer(
         size_t max_frames_in_flight,
-        const VulkanContext &context
+        const VulkanContext& context
     );
 
-    void update(size_t frame_index, const T &data);
-    const std::vector<vk::raii::Buffer> &get_uniform_buffers() const;
+    void update(size_t frame_index, const T& data);
+    const std::vector<vk::raii::Buffer>& get_uniform_buffers() const;
 
   private:
     UniformBuffer(

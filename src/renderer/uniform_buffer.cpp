@@ -9,7 +9,7 @@ template <typename T>
 std::expected<UniformBuffer<T>, std::string>
 UniformBuffer<T>::new_uniform_buffer(
     size_t max_frames_in_flight,
-    const VulkanContext &context
+    const VulkanContext& context
 ) {
     std::vector<vk::raii::Buffer> uniform_buffers;
     std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
@@ -58,7 +58,7 @@ UniformBuffer<T>::get_uniform_buffers() const {
 }
 
 template <typename T>
-void UniformBuffer<T>::update(size_t frame_index, const T &data) {
+void UniformBuffer<T>::update(size_t frame_index, const T& data) {
     *m_uniform_buffers_mapped[frame_index] = data;
 }
 

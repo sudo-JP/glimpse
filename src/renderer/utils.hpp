@@ -12,13 +12,13 @@ create_buffer(
     vk::DeviceSize size,
     vk::BufferUsageFlags usage,
     vk::MemoryPropertyFlags properties,
-    const VulkanContext &context
+    const VulkanContext& context
 );
 
 template <typename T>
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_staging_buffer(
-    const VulkanContext &context,
+    const VulkanContext& context,
     const std::vector<T> data,
     const vk::DeviceSize size
 );
@@ -26,13 +26,13 @@ create_staging_buffer(
 std::expected<uint32_t, std::string> find_memory_type(
     uint32_t type_filter,
     vk::MemoryPropertyFlags properties,
-    const VulkanContext &context
+    const VulkanContext& context
 );
 
 vk::raii::ImageView create_image_view(
-    const vk::Image &image,
+    const vk::Image& image,
     vk::Format format,
-    const vk::raii::Device &device
+    const vk::raii::Device& device
 );
 } // namespace renderer
 } // namespace glimpse

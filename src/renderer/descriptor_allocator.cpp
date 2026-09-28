@@ -4,12 +4,12 @@
 namespace glimpse::renderer {
 
 DescriptorAllocator::DescriptorAllocator(
-    const VulkanContext &context,
-    const GraphicsPipeline &pipeline,
+    const VulkanContext& context,
+    const GraphicsPipeline& pipeline,
     size_t max_frames_in_flight
 )
     : m_max_frames_in_flight(max_frames_in_flight), m_vk_ctx(context) {
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
     std::array<vk::DescriptorPoolSize, 2> pool_sizes = {
         vk::DescriptorPoolSize(
             vk::DescriptorType::eUniformBuffer,
@@ -30,11 +30,11 @@ DescriptorAllocator::DescriptorAllocator(
 
 template <typename T>
 std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
-    const std::vector<vk::raii::Buffer> &uniform_buffers,
-    const Material &material
+    const std::vector<vk::raii::Buffer>& uniform_buffers,
+    const Material& material
 ) {
-    const auto &layout = material.get_descriptor_set_layout();
-    const auto &texture = material.get_texture();
+    const auto& layout = material.get_descriptor_set_layout();
+    const auto& texture = material.get_texture();
 
     std::vector<vk::DescriptorSetLayout> layouts(
         m_max_frames_in_flight,
@@ -45,7 +45,7 @@ std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
         .setDescriptorSetCount(static_cast<uint32_t>(layouts.size()))
         .setPSetLayouts(layouts.data());
 
-    const auto &device = m_vk_ctx.get().get_device();
+    const auto& device = m_vk_ctx.get().get_device();
     auto descriptor_sets = device.allocateDescriptorSets(alloc_info);
 
     for (size_t i = 0; i < m_max_frames_in_flight; ++i) {
@@ -84,6 +84,6 @@ std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
 template std::vector<vk::raii::DescriptorSet>
 DescriptorAllocator::attach_resources<MVP>(
     const std::vector<vk::raii::Buffer> &,
-    const Material &material
+    const Material& material
 );
 } // namespace glimpse::renderer

@@ -26,18 +26,18 @@ namespace renderer {
 class VulkanContext {
   public:
     static std::expected<VulkanContext, std::string> new_vk_context(
-        const ContextAppInfo &app_context,
-        const ContextAppInfo &engine_context,
-        const Window &window,
+        const ContextAppInfo& app_context,
+        const ContextAppInfo& engine_context,
+        const Window& window,
         const bool debug_mode
     );
 
     // getters
-    const vk::raii::PhysicalDevice &get_physical_device() const;
-    const vk::raii::SurfaceKHR &get_surface() const;
-    const vk::raii::Device &get_device() const;
+    const vk::raii::PhysicalDevice& get_physical_device() const;
+    const vk::raii::SurfaceKHR& get_surface() const;
+    const vk::raii::Device& get_device() const;
     const uint32_t get_graphics_queue_index() const;
-    const vk::raii::Queue &get_queue() const;
+    const vk::raii::Queue& get_queue() const;
 
   private:
     struct DeviceResources {

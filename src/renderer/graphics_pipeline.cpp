@@ -6,7 +6,7 @@
 namespace glimpse::renderer {
 namespace {
 std::expected<std::vector<char>, std::string> read_file(
-    const std::string &filename) {
+    const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
     if (!file.is_open())
         return std::unexpected("failed to open file");
@@ -20,8 +20,8 @@ std::expected<std::vector<char>, std::string> read_file(
 
 [[nodiscard]] std::expected<vk::raii::ShaderModule, std::string>
 create_shader_module(
-    const std::string &filename,
-    const VulkanContext &context
+    const std::string& filename,
+    const VulkanContext& context
 ) {
     auto shader_file_res = read_file(filename);
     if (!shader_file_res)
@@ -32,7 +32,7 @@ create_shader_module(
         .setCodeSize(shader_file.size() * sizeof(char))
         .setPCode(reinterpret_cast<const uint32_t *>(shader_file.data()));
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
 
     vk::raii::ShaderModule shader_module(device, create_info);
     return shader_module;
@@ -42,10 +42,10 @@ create_shader_module(
 // Constructor
 std::expected<GraphicsPipeline, std::string>
 GraphicsPipeline::new_graphics_pipeline(
-    const ShaderStageConfig &shader_config,
+    const ShaderStageConfig& shader_config,
     size_t max_frames_in_flight,
-    const VulkanContext &context,
-    const VulkanSwapchain &swapchain
+    const VulkanContext& context,
+    const VulkanSwapchain& swapchain
 ) {
     auto shader_module_res = create_shader_module(shader_config.filename, context);
     if (!shader_module_res)
@@ -85,7 +85,7 @@ GraphicsPipeline::new_graphics_pipeline(
     auto input_assembly = vk::PipelineInputAssemblyStateCreateInfo()
         .setTopology(vk::PrimitiveTopology::eTriangleList);
 
-    const auto &swapchain_extent = swapchain.get_extent();
+    const auto& swapchain_extent = swapchain.get_extent();
 
     vk::Viewport viewport = vk::Viewport()
         .setX(0.0f)
@@ -137,7 +137,7 @@ GraphicsPipeline::new_graphics_pipeline(
         .setAttachmentCount(1)
         .setPAttachments(&color_blend_attachment);
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
     auto uniform_binding = vk::DescriptorSetLayoutBinding()
         .setBinding(0)
         .setDescriptorType(vk::DescriptorType::eUniformBuffer)
@@ -163,7 +163,7 @@ GraphicsPipeline::new_graphics_pipeline(
 
     auto pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_info);
 
-    auto const &swapchain_format = swapchain.get_format();
+    auto const& swapchain_format = swapchain.get_format();
 
     auto pipeline_create_info_chain = vk::StructureChain<vk::GraphicsPipelineCreateInfo,
             vk::PipelineRenderingCreateInfo>();
@@ -200,7 +200,7 @@ GraphicsPipeline::new_graphics_pipeline(
 }
 
 GraphicsPipeline::GraphicsPipeline(
-    const VulkanContext &context,
+    const VulkanContext& context,
     vk::raii::DescriptorSetLayout descriptor_set_layout,
     vk::raii::PipelineLayout pipeline_layout,
     vk::raii::Pipeline graphics_pipeline
@@ -210,11 +210,11 @@ GraphicsPipeline::GraphicsPipeline(
       m_pipeline_layout(std::move(pipeline_layout)),
       m_graphics_pipeline(std::move(graphics_pipeline)) {}
 
-const vk::raii::Pipeline &GraphicsPipeline::get_graphics_pipeline() const {
+const vk::raii::Pipeline& GraphicsPipeline::get_graphics_pipeline() const {
     return m_graphics_pipeline;
 }
 
-const vk::raii::PipelineLayout &GraphicsPipeline::get_pipeline_layout() const {
+const vk::raii::PipelineLayout& GraphicsPipeline::get_pipeline_layout() const {
     return m_pipeline_layout;
 }
 

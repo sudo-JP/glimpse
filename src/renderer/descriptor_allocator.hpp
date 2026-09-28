@@ -10,15 +10,15 @@ namespace renderer {
 class DescriptorAllocator {
   public:
     DescriptorAllocator(
-        const VulkanContext &context,
-        const GraphicsPipeline &pipeline,
+        const VulkanContext& context,
+        const GraphicsPipeline& pipeline,
         size_t max_frames_in_flight
     );
 
     template <typename T>
     std::vector<vk::raii::DescriptorSet> attach_resources(
-        const std::vector<vk::raii::Buffer> &uniform_buffers,
-        const Material &material
+        const std::vector<vk::raii::Buffer>& uniform_buffers,
+        const Material& material
     );
 
   private:

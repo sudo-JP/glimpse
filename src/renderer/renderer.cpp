@@ -36,8 +36,8 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
 
     auto context = std::make_unique<VulkanContext>(std::move(vk_ctx_res).value());
 
-    const auto &vk_ctx = *context;
-    const auto &device = vk_ctx.get_device();
+    const auto& vk_ctx = *context;
+    const auto& device = vk_ctx.get_device();
 
     auto command_recorder = CommandRecorder(vk_ctx, m_max_frames_in_flight);
     std::vector<vk::raii::Semaphore> render_finished_semaphores;
@@ -49,7 +49,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         return std::unexpected(std::move(swapchain_res).error());
     auto swapchain = std::move(swapchain_res).value();
 
-    const auto &swapchain_images = swapchain.get_swapchain_images();
+    const auto& swapchain_images = swapchain.get_swapchain_images();
     for (size_t i = 0; i < swapchain_images.size(); i++) {
         render_finished_semaphores.emplace_back(
             device,
@@ -124,12 +124,12 @@ void Renderer::run() {
         if (!result)
             std::abort();
     }
-    const auto &device = m_vulkan_context->get_device();
+    const auto& device = m_vulkan_context->get_device();
     device.waitIdle();
 }
 
 std::expected<void, std::string> Renderer::draw_frame() {
-    const auto &device = m_vulkan_context->get_device();
+    const auto& device = m_vulkan_context->get_device();
     auto fence_res = device.waitForFences(
         *m_in_flight_fences[m_frame_index],
         vk::True,
@@ -184,7 +184,7 @@ std::expected<void, std::string> Renderer::draw_frame() {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(
         current_time - start_time)
                      .count();
-    const auto &swapchain_extent = m_swapchain.get_extent();
+    const auto& swapchain_extent = m_swapchain.get_extent();
     MVP mvp{.model = glm::rotate(
         glm::mat4(1.0f),
         time * glm::radians(90.0f),
@@ -227,7 +227,7 @@ std::expected<void, std::string> Renderer::draw_frame() {
 void Renderer::submit() {
     vk::PipelineStageFlags wait_destination_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    const auto &command_buffer = m_command_recorder.get_command_buffer(m_frame_index);
+    const auto& command_buffer = m_command_recorder.get_command_buffer(m_frame_index);
     const auto submit_info = vk::SubmitInfo()
         .setWaitSemaphoreCount(1)
         .setPWaitSemaphores(&*m_present_complete_semaphores[m_frame_index])
@@ -238,12 +238,12 @@ void Renderer::submit() {
         .setPSignalSemaphores(
                 &*m_render_finished_semaphores[m_frame_index]);
 
-    const auto &queue = m_vulkan_context->get_queue();
+    const auto& queue = m_vulkan_context->get_queue();
     queue.submit(submit_info, *m_in_flight_fences[m_frame_index]);
 }
 
 std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
-    const auto &swapchain = m_swapchain.get_swapchain();
+    const auto& swapchain = m_swapchain.get_swapchain();
     const auto present_info_khr = vk::PresentInfoKHR()
         .setWaitSemaphoreCount(1)
         .setPWaitSemaphores(&*m_render_finished_semaphores[m_frame_index])
@@ -251,7 +251,7 @@ std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
         .setPSwapchains(&*swapchain)
         .setPImageIndices(&image_idx);
 
-    const auto &queue = m_vulkan_context->get_queue();
+    const auto& queue = m_vulkan_context->get_queue();
     auto result = queue.presentKHR(present_info_khr);
 
     if ((result == vk::Result::eSuboptimalKHR) ||

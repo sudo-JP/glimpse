@@ -18,15 +18,15 @@ class Mesh {
     template <typename T>
         requires std::same_as<T, uint16_t> || std::same_as<T, uint32_t>
     static std::expected<Mesh, std::string> new_mesh(
-        const std::vector<VulkanVertex> &vertices,
-        const std::vector<T> &indices,
-        const VulkanContext &context,
-        const CommandRecorder &recorder
+        const std::vector<VulkanVertex>& vertices,
+        const std::vector<T>& indices,
+        const VulkanContext& context,
+        const CommandRecorder& recorder
     );
 
     // getters
-    const vk::raii::Buffer &get_vertex_buffer() const;
-    const vk::raii::Buffer &get_index_buffer() const;
+    const vk::raii::Buffer& get_vertex_buffer() const;
+    const vk::raii::Buffer& get_index_buffer() const;
     uint32_t get_vertices_size() const;
     uint32_t get_indices_size() const;
 

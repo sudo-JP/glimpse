@@ -22,9 +22,9 @@ template <typename T> class Entity {
 template <typename T> class EntityBuilder {
   public:
     EntityBuilder<T>();
-    Entity<T> build(DescriptorAllocator &descriptor_allocator);
+    Entity<T> build(DescriptorAllocator& descriptor_allocator);
 
-    EntityBuilder<T> &with_mesh(Mesh);
+    EntityBuilder<T>& with_mesh(Mesh);
 
   private:
     // TODO: make them optional

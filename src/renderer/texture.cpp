@@ -16,7 +16,7 @@ create_image(
     vk::ImageTiling tiling,
     vk::ImageUsageFlags usage,
     vk::MemoryPropertyFlags properties,
-    const VulkanContext &context
+    const VulkanContext& context
 ) {
     auto image_info = vk::ImageCreateInfo()
         .setImageType(vk::ImageType::e2D)
@@ -29,7 +29,7 @@ create_image(
         .setUsage(usage)
         .setSharingMode(vk::SharingMode::eExclusive);
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
     auto image = vk::raii::Image(device, image_info);
 
     // Memory
@@ -52,9 +52,9 @@ create_image(
     return std::pair{std::move(image), std::move(image_memory)};
 }
 
-vk::raii::Sampler create_sampler(const VulkanContext &context) {
-    const auto &phys_device = context.get_physical_device();
-    const auto &device = context.get_device();
+vk::raii::Sampler create_sampler(const VulkanContext& context) {
+    const auto& phys_device = context.get_physical_device();
+    const auto& device = context.get_device();
 
     auto properties = phys_device.getProperties();
     auto sampler_info = vk::SamplerCreateInfo()
@@ -76,9 +76,9 @@ vk::raii::Sampler create_sampler(const VulkanContext &context) {
 } // namespace
 
 std::expected<Texture, std::string> Texture::new_texture(
-    const std::string &filename,
-    const CommandRecorder &recorder,
-    const VulkanContext &context
+    const std::string& filename,
+    const CommandRecorder& recorder,
+    const VulkanContext& context
 ) {
     ktxTexture *texture = nullptr;
     const auto path = filename.c_str();
@@ -150,11 +150,11 @@ Texture::Texture(
       m_texture_image_view(std::move(texture_image_view)),
       m_texture_sampler(std::move(texture_sampler)) {}
 
-const vk::raii::Sampler &Texture::get_texture_sampler() const {
+const vk::raii::Sampler& Texture::get_texture_sampler() const {
     return m_texture_sampler;
 }
 
-const vk::raii::ImageView &Texture::get_texture_image_view() const {
+const vk::raii::ImageView& Texture::get_texture_image_view() const {
     return m_texture_image_view;
 }
 } // namespace glimpse::renderer

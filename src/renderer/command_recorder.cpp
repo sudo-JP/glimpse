@@ -9,9 +9,9 @@
 namespace glimpse::renderer {
 namespace {
 void copy_to_buffer_image(
-    vk::raii::CommandBuffer &command_buffer,
-    const vk::raii::Buffer &buffer,
-    const vk::raii::Image &image,
+    vk::raii::CommandBuffer& command_buffer,
+    const vk::raii::Buffer& buffer,
+    const vk::raii::Image& image,
     uint32_t width,
     uint32_t height
 ) {
@@ -39,7 +39,7 @@ void copy_to_buffer_image(
 
 // Constructor
 CommandRecorder::CommandRecorder(
-    const VulkanContext &context,
+    const VulkanContext& context,
     size_t max_frames_in_flight
 )
     : m_command_pool(
@@ -67,13 +67,13 @@ std::expected<void, std::string> CommandRecorder::transition_swapchain_image(
     vk::PipelineStageFlags2 src_stage_mask,
     vk::PipelineStageFlags2 dst_stage_mask,
     size_t frame_index,
-    const VulkanSwapchain &swapchain
+    const VulkanSwapchain& swapchain
 ) {
     const auto image_res = swapchain.get_image(image_index);
     if (!image_res)
         return std::unexpected(std::move(image_res).error());
 
-    const auto &image = std::move(image_res).value();
+    const auto& image = std::move(image_res).value();
 
     const auto subresource_range = vk::ImageSubresourceRange()
         .setAspectMask(vk::ImageAspectFlagBits::eColor)
@@ -104,8 +104,8 @@ std::expected<void, std::string> CommandRecorder::transition_swapchain_image(
 }
 
 std::expected<void, std::string> CommandRecorder::transition_image_layout(
-    vk::raii::CommandBuffer &command_buffer,
-    const vk::raii::Image &image,
+    vk::raii::CommandBuffer& command_buffer,
+    const vk::raii::Image& image,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout
 ) const {
@@ -151,12 +151,12 @@ std::expected<void, std::string> CommandRecorder::transition_image_layout(
 std::expected<void, std::string> CommandRecorder::record_command_buffer(
     uint32_t image_index,
     size_t frame_index,
-    const VulkanSwapchain &swapchain,
-    const GraphicsPipeline &pipeline,
-    const Mesh &mesh
+    const VulkanSwapchain& swapchain,
+    const GraphicsPipeline& pipeline,
+    const Mesh& mesh
 ) {
     // Start command buffer, after select the current command buffer index
-    const auto &command_buffer = m_command_buffers[frame_index];
+    const auto& command_buffer = m_command_buffers[frame_index];
     command_buffer.begin({});
     auto transition_res = transition_swapchain_image(
         image_index,
@@ -174,12 +174,12 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         return std::unexpected(std::move(transition_res).error());
     }
 
-    auto &image_view_res = swapchain.get_image_view(image_index);
+    auto& image_view_res = swapchain.get_image_view(image_index);
     if (!image_view_res) {
         command_buffer.reset();
         return std::unexpected(std::move(image_view_res).error());
     }
-    const auto &image_view = std::move(image_view_res).value();
+    const auto& image_view = std::move(image_view_res).value();
 
     const auto clear_color = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
     auto attachment_info = vk::RenderingAttachmentInfo()
@@ -189,7 +189,7 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         .setStoreOp(vk::AttachmentStoreOp::eStore)
         .setClearValue(clear_color);
 
-    const auto &swapchain_extent = swapchain.get_extent();
+    const auto& swapchain_extent = swapchain.get_extent();
 
     const auto render_area = vk::Rect2D()
         .setOffset(vk::Offset2D(0, 0))
@@ -202,7 +202,7 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         .setPColorAttachments(&attachment_info);
 
     command_buffer.beginRendering(rendering_info);
-    const auto &graphics_pipeline = pipeline.get_graphics_pipeline();
+    const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
 
     command_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
@@ -222,8 +222,8 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         0,
         vk::Rect2D(vk::Offset2D(0, 0), swapchain_extent)
     );
-    const auto &vertex_buffer = mesh.get_vertex_buffer();
-    const auto &index_buffer = mesh.get_index_buffer();
+    const auto& vertex_buffer = mesh.get_vertex_buffer();
+    const auto& index_buffer = mesh.get_index_buffer();
 
     // TODO: add offset to mesh, currently hard code 0
     command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
@@ -233,11 +233,11 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         vk::IndexType::eUint16
     ); // TODO: add get type for mesh
 
-    const auto &descriptor_set_option = pipeline.get_descriptor_set(frame_index);
+    const auto& descriptor_set_option = pipeline.get_descriptor_set(frame_index);
     if (descriptor_set_option.has_value()) {
-        const auto &pipeline_layout = pipeline.get_pipeline_layout();
+        const auto& pipeline_layout = pipeline.get_pipeline_layout();
 
-        const auto &descriptor_set = descriptor_set_option->get();
+        const auto& descriptor_set = descriptor_set_option->get();
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             pipeline_layout,
@@ -278,8 +278,8 @@ CommandRecorder::begin_single_command_time_commands() const {
         .setLevel(vk::CommandBufferLevel::ePrimary)
         .setCommandBufferCount(1);
 
-    const auto &context = m_vk_ctx.get();
-    const auto &device = context.get_device();
+    const auto& context = m_vk_ctx.get();
+    const auto& device = context.get_device();
     auto command_buffer = std::move(device.allocateCommandBuffers(alloc_info).front());
 
     // Buffer
@@ -289,8 +289,8 @@ CommandRecorder::begin_single_command_time_commands() const {
 }
 
 std::expected<void, std::string> CommandRecorder::upload_texture(
-    const vk::raii::Buffer &staging_buffer,
-    const vk::raii::Image &image,
+    const vk::raii::Buffer& staging_buffer,
+    const vk::raii::Image& image,
     uint32_t width,
     uint32_t height
 ) const {
@@ -322,7 +322,7 @@ void CommandRecorder::end_single_time_command(
     vk::raii::CommandBuffer &&command_buffer) const {
     command_buffer.end();
 
-    const auto &queue = m_vk_ctx.get().get_queue();
+    const auto& queue = m_vk_ctx.get().get_queue();
     const auto submit_info = vk::SubmitInfo()
         .setCommandBufferCount(1)
         .setPCommandBuffers(&*command_buffer);
@@ -331,8 +331,8 @@ void CommandRecorder::end_single_time_command(
 }
 
 void CommandRecorder::copy_and_submit_immediate(
-    vk::raii::Buffer &src_buffer,
-    vk::raii::Buffer &dst_buffer,
+    vk::raii::Buffer& src_buffer,
+    vk::raii::Buffer& dst_buffer,
     vk::DeviceSize size
 ) const {
     auto command_copy_buffer = begin_single_command_time_commands();
@@ -344,7 +344,7 @@ void CommandRecorder::copy_and_submit_immediate(
     end_single_time_command(std::move(command_copy_buffer));
 }
 
-const vk::raii::CommandBuffer &CommandRecorder::get_command_buffer(
+const vk::raii::CommandBuffer& CommandRecorder::get_command_buffer(
     size_t index) const {
     return m_command_buffers[index];
 }
@@ -353,7 +353,7 @@ void CommandRecorder::reset_command_buffer(size_t index) {
     m_command_buffers[index].reset();
 }
 
-const vk::raii::CommandPool &CommandRecorder::get_command_pool() const {
+const vk::raii::CommandPool& CommandRecorder::get_command_pool() const {
     return m_command_pool;
 }
 } // namespace glimpse::renderer

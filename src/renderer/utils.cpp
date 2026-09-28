@@ -7,9 +7,9 @@ namespace glimpse::renderer {
 std::expected<uint32_t, std::string> find_memory_type(
     uint32_t type_filter,
     vk::MemoryPropertyFlags properties,
-    const VulkanContext &context
+    const VulkanContext& context
 ) {
-    const auto &phys_device = context.get_physical_device();
+    const auto& phys_device = context.get_physical_device();
     auto memory_properties = phys_device.getMemoryProperties();
 
     for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
@@ -26,14 +26,14 @@ create_buffer(
     vk::DeviceSize size,
     vk::BufferUsageFlags usage,
     vk::MemoryPropertyFlags properties,
-    const VulkanContext &context
+    const VulkanContext& context
 ) {
     auto buffer_info = vk::BufferCreateInfo()
             .setSize(size)
             .setUsage(usage)
             .setSharingMode(vk::SharingMode::eExclusive);
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
 
     auto vertex_buffer = vk::raii::Buffer(device, buffer_info);
 
@@ -63,7 +63,7 @@ create_buffer(
 template <typename T>
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_staging_buffer(
-    const VulkanContext &context,
+    const VulkanContext& context,
     const std::vector<T> data,
     const vk::DeviceSize size
 ) {
@@ -88,9 +88,9 @@ create_staging_buffer(
 }
 
 vk::raii::ImageView create_image_view(
-    const vk::Image &image,
+    const vk::Image& image,
     vk::Format format,
-    const vk::raii::Device &device
+    const vk::raii::Device& device
 ) {
     auto sub_resource_range = vk::ImageSubresourceRange()
         .setAspectMask(vk::ImageAspectFlagBits::eColor)
@@ -109,7 +109,7 @@ vk::raii::ImageView create_image_view(
 template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
     std::string>
 create_staging_buffer<VulkanVertex>(
-    VulkanContext const &,
+    const VulkanContext& ,
     std::vector<VulkanVertex>,
     unsigned long
 );
@@ -117,7 +117,7 @@ create_staging_buffer<VulkanVertex>(
 template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
     std::string>
 create_staging_buffer<unsigned short>(
-    VulkanContext const &,
+    const VulkanContext& ,
     std::vector<unsigned short>,
     unsigned long
 );
@@ -125,7 +125,7 @@ create_staging_buffer<unsigned short>(
 template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
     std::string>
 create_staging_buffer<unsigned int>(
-    VulkanContext const &,
+    const VulkanContext& ,
     std::vector<unsigned int>,
     unsigned long
 );
@@ -133,7 +133,7 @@ create_staging_buffer<unsigned int>(
 template std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>,
     std::string>
 create_staging_buffer<unsigned char>(
-    VulkanContext const &,
+    const VulkanContext& ,
     std::vector<unsigned char>,
     unsigned long
 );

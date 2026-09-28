@@ -22,7 +22,7 @@ namespace glimpse::renderer {
 namespace {
 // Validation layers
 std::expected<std::vector<const char *>, std::string> required_layers(
-    const vk::raii::Context &context) {
+    const vk::raii::Context& context) {
 
     // validation layers
     const std::vector<char const *> validation_layers = {
@@ -33,9 +33,9 @@ std::expected<std::vector<const char *>, std::string> required_layers(
     auto layer_properties = context.enumerateInstanceLayerProperties();
     auto unsupported_layer_it = std::ranges::find_if(
         required_layers,
-        [&layer_properties](auto const &required_layer) {
+        [&layer_properties](auto const& required_layer) {
             return std::ranges::none_of(layer_properties,
-                [required_layer](auto const &layer_property) {
+                [required_layer](auto const& layer_property) {
                     std::string_view layer_name = layer_property.layerName;
                     return layer_name.compare(required_layer) == 0;
                 });
@@ -52,7 +52,7 @@ std::expected<std::vector<const char *>, std::string> required_layers(
 
 // Extension layers
 std::expected<std::vector<const char *>, std::string>
-required_extensions(const vk::raii::Context &context, const bool debug) {
+required_extensions(const vk::raii::Context& context, const bool debug) {
     uint32_t glfw_extension_count = 0;
     auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
@@ -71,7 +71,7 @@ required_extensions(const vk::raii::Context &context, const bool debug) {
 
     for (auto i = 0; i < glfw_extension_count; i++) {
         auto check_glfw = [glfw_extension = glfw_extensions[i]](
-                              auto const &extension_property) {
+                              auto const& extension_property) {
             std::string_view extension_name = extension_property.extensionName;
             return extension_name.compare(glfw_extension) == 0;
         };
@@ -104,7 +104,7 @@ static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(
 
 // Debug messenger
 vk::raii::DebugUtilsMessengerEXT setup_debug_messenger(
-    const vk::raii::Instance &instance) {
+    const vk::raii::Instance& instance) {
     vk::DebugUtilsMessageSeverityFlagsEXT severity_flags(
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
@@ -125,7 +125,7 @@ vk::raii::DebugUtilsMessengerEXT setup_debug_messenger(
 
 // Helper for picking out physical device
 // wtf...
-bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
+bool is_device_suitable(const vk::raii::PhysicalDevice& physical_device) {
     auto device_properties = physical_device.getProperties();
     auto device_features = physical_device.getFeatures();
 
@@ -136,7 +136,7 @@ bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
     auto queue_families = physical_device.getQueueFamilyProperties();
     bool support_graphics = std::ranges::any_of(
         queue_families,
-        [](auto const &qfq) {
+        [](auto const& qfq) {
             return !!(qfq.queueFlags & vk::QueueFlagBits::eGraphics);
         }
     );
@@ -146,10 +146,10 @@ bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
     auto available_device_extensions = physical_device.enumerateDeviceExtensionProperties();
     bool supports_all_required_extensions = std::ranges::all_of(
         required_device_extension,
-        [&available_device_extensions](auto const &required_device_extension) {
+        [&available_device_extensions](auto const& required_device_extension) {
             return std::ranges::any_of(available_device_extensions,
                 [required_device_extension](
-                    auto const &available_device_extension) {
+                    auto const& available_device_extension) {
                     std::string_view extension_name = available_device_extension.extensionName;
                     return extension_name.compare(required_device_extension) ==
                            0;
@@ -184,12 +184,12 @@ bool is_device_suitable(const vk::raii::PhysicalDevice &physical_device) {
 
 // Pick out physical device
 std::expected<vk::raii::PhysicalDevice, std::string> pick_physical_device(
-    const vk::raii::Instance &instance) {
+    const vk::raii::Instance& instance) {
     auto physical_devices = instance.enumeratePhysicalDevices();
     if (physical_devices.empty()) {
         return std::unexpected("failed to find GPUs with vulkan support");
     }
-    for (const auto &pd : physical_devices) {
+    for (const auto& pd : physical_devices) {
         if (is_device_suitable(pd))
             return std::move(pd);
     }
@@ -199,8 +199,8 @@ std::expected<vk::raii::PhysicalDevice, std::string> pick_physical_device(
 std::expected<std::tuple<vk::raii::Device, vk::raii::Queue, uint32_t>,
     std::string>
 create_logical_device(
-    const vk::raii::PhysicalDevice &physical_device,
-    const vk::SurfaceKHR &surface
+    const vk::raii::PhysicalDevice& physical_device,
+    const vk::SurfaceKHR& surface
 ) {
     // Queue stuff
     std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
@@ -265,9 +265,9 @@ create_logical_device(
 } // namespace
 
 std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
-    const ContextAppInfo &app_context,
-    const ContextAppInfo &engine_context,
-    const Window &window,
+    const ContextAppInfo& app_context,
+    const ContextAppInfo& engine_context,
+    const Window& window,
     const bool debug_mode
 ) {
     const char *app_name_c = app_context.name.c_str();
@@ -359,7 +359,7 @@ std::expected<VulkanContext, std::string> VulkanContext::new_vk_context(
             std::move(debug_messenger),
             graphics_queue_idx
         );
-    } catch (const vk::SystemError &err) {
+    } catch (const vk::SystemError& err) {
         return std::unexpected(err.what());
     }
     return std::unexpected("failed to initialize vulkan context");
@@ -382,21 +382,21 @@ VulkanContext::VulkanContext(
       m_graphics_queue_index(graphics_queue_index) {}
 
 // Getters
-const vk::raii::PhysicalDevice &VulkanContext::get_physical_device() const {
+const vk::raii::PhysicalDevice& VulkanContext::get_physical_device() const {
     return m_physical_device;
 }
 
-const vk::raii::SurfaceKHR &VulkanContext::get_surface() const {
+const vk::raii::SurfaceKHR& VulkanContext::get_surface() const {
     return m_surface;
 }
 
-const vk::raii::Device &VulkanContext::get_device() const { return m_device; }
+const vk::raii::Device& VulkanContext::get_device() const { return m_device; }
 
 const uint32_t VulkanContext::get_graphics_queue_index() const {
     return m_graphics_queue_index;
 }
 
-const vk::raii::Queue &VulkanContext::get_queue() const {
+const vk::raii::Queue& VulkanContext::get_queue() const {
     return m_graphics_queue;
 }
 } // namespace glimpse::renderer

@@ -14,32 +14,32 @@ class Mesh;
 
 class CommandRecorder {
   public:
-    CommandRecorder(const VulkanContext &context, size_t max_frames_in_flight);
+    CommandRecorder(const VulkanContext& context, size_t max_frames_in_flight);
     std::expected<void, std::string> record_command_buffer(
         uint32_t image_index,
         size_t frame_index,
-        const VulkanSwapchain &swapchain,
-        const GraphicsPipeline &pipeline,
-        const Mesh &mesh
+        const VulkanSwapchain& swapchain,
+        const GraphicsPipeline& pipeline,
+        const Mesh& mesh
     );
 
     void reset_command_buffer(size_t index);
     void copy_and_submit_immediate(
-        vk::raii::Buffer &src_buffer,
-        vk::raii::Buffer &dst_buffer,
+        vk::raii::Buffer& src_buffer,
+        vk::raii::Buffer& dst_buffer,
         vk::DeviceSize size
     ) const;
 
     std::expected<void, std::string> upload_texture(
-        const vk::raii::Buffer &staging_buffer,
-        const vk::raii::Image &image,
+        const vk::raii::Buffer& staging_buffer,
+        const vk::raii::Image& image,
         uint32_t width,
         uint32_t height
     ) const;
 
     // getters
-    const vk::raii::CommandBuffer &get_command_buffer(size_t index) const;
-    const vk::raii::CommandPool &get_command_pool() const;
+    const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
+    const vk::raii::CommandPool& get_command_pool() const;
 
   private:
     // Private helpers
@@ -52,12 +52,12 @@ class CommandRecorder {
         vk::PipelineStageFlags2 src_stage_mask,
         vk::PipelineStageFlags2 dst_stage_mask,
         size_t frame_index,
-        const VulkanSwapchain &swapchain
+        const VulkanSwapchain& swapchain
     );
 
     std::expected<void, std::string> transition_image_layout(
-        vk::raii::CommandBuffer &command_buffer,
-        const vk::raii::Image &image,
+        vk::raii::CommandBuffer& command_buffer,
+        const vk::raii::Image& image,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout
     ) const;

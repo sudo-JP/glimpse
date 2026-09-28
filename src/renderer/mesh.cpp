@@ -13,9 +13,9 @@ namespace glimpse::renderer {
 namespace {
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_vertex_buffer(
-    const std::vector<VulkanVertex> &vertices,
-    const VulkanContext &context,
-    const CommandRecorder &recorder
+    const std::vector<VulkanVertex>& vertices,
+    const VulkanContext& context,
+    const CommandRecorder& recorder
 ) {
     vk::DeviceSize buffer_size = sizeof(std::remove_cvref_t<decltype(vertices)>::value_type) *
         vertices.size();
@@ -52,9 +52,9 @@ template <typename T>
     requires std::same_as<T, uint16_t> || std::same_as<T, uint32_t>
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_index_buffer(
-    const std::vector<T> &indices,
-    const VulkanContext &context,
-    const CommandRecorder &recorder
+    const std::vector<T>& indices,
+    const VulkanContext& context,
+    const CommandRecorder& recorder
 ) {
     vk::DeviceSize buffer_size = sizeof(typename std::remove_cvref_t<decltype(indices)>::value_type) *
         indices.size();
@@ -91,10 +91,10 @@ create_index_buffer(
 template <typename T>
     requires std::same_as<T, uint16_t> || std::same_as<T, uint32_t>
 std::expected<Mesh, std::string> Mesh::new_mesh(
-    const std::vector<VulkanVertex> &vertices,
-    const std::vector<T> &indices,
-    const VulkanContext &context,
-    const CommandRecorder &recorder
+    const std::vector<VulkanVertex>& vertices,
+    const std::vector<T>& indices,
+    const VulkanContext& context,
+    const CommandRecorder& recorder
 ) {
     // Vertex buffer creation
     auto vertex_buf_res = create_vertex_buffer(vertices, context, recorder);
@@ -126,11 +126,11 @@ Mesh::Mesh(AllocatedBuffer vertex_buffer, AllocatedBuffer index_buffer)
       m_index_buffer_memory(std::move(index_buffer.buffer_memory)),
       m_indices_size(std::move(index_buffer.size)) {}
 
-const vk::raii::Buffer &Mesh::get_vertex_buffer() const {
+const vk::raii::Buffer& Mesh::get_vertex_buffer() const {
     return m_vertex_buffer;
 }
 
-const vk::raii::Buffer &Mesh::get_index_buffer() const {
+const vk::raii::Buffer& Mesh::get_index_buffer() const {
     return m_index_buffer;
 }
 

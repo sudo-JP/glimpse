@@ -13,10 +13,10 @@
 namespace glimpse::renderer {
 namespace {
 std::expected<vk::SurfaceFormatKHR, std::string> choose_swap_surface_format(
-    const std::vector<vk::SurfaceFormatKHR> &available_formats) {
+    const std::vector<vk::SurfaceFormatKHR>& available_formats) {
     const auto format_it = std::ranges::find_if(
         available_formats,
-        [](const auto &format) {
+        [](const auto& format) {
             return format.format == vk::Format::eB8G8R8A8Srgb &&
                    format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
         }
@@ -28,10 +28,10 @@ std::expected<vk::SurfaceFormatKHR, std::string> choose_swap_surface_format(
 }
 
 std::expected<vk::PresentModeKHR, std::string> choose_swap_presentation_mode(
-    const std::vector<vk::PresentModeKHR> &available_presentation_modes) {
+    const std::vector<vk::PresentModeKHR>& available_presentation_modes) {
     const bool check_has_fifo = std::ranges::any_of(
         available_presentation_modes,
-        [](const auto &present_mode) {
+        [](const auto& present_mode) {
                 return present_mode == vk::PresentModeKHR::eFifo;
             }
     );
@@ -41,7 +41,7 @@ std::expected<vk::PresentModeKHR, std::string> choose_swap_presentation_mode(
             "this is really bad if missing, must be default");
     const bool has_mailbox = std::ranges::any_of(
         available_presentation_modes,
-        [](const auto &present_mode) {
+        [](const auto& present_mode) {
             return present_mode == vk::PresentModeKHR::eMailbox;
         }
     );
@@ -53,8 +53,8 @@ std::expected<vk::PresentModeKHR, std::string> choose_swap_presentation_mode(
 }
 
 vk::Extent2D choose_swap_extent(
-    const vk::SurfaceCapabilitiesKHR &capabilities,
-    const glimpse::Window &window
+    const vk::SurfaceCapabilitiesKHR& capabilities,
+    const glimpse::Window& window
 ) {
     if (capabilities.currentExtent.width !=
         std::numeric_limits<uint32_t>::max()) {
@@ -62,7 +62,7 @@ vk::Extent2D choose_swap_extent(
     }
 
     int width, height;
-    const auto &win = window.get_window();
+    const auto& win = window.get_window();
     glfwGetFramebufferSize(win, &width, &height);
 
     return {std::clamp<uint32_t>(
@@ -78,7 +78,7 @@ vk::Extent2D choose_swap_extent(
 }
 
 uint32_t choose_swap_min_image_count(
-    const vk::SurfaceCapabilitiesKHR &capabilities) {
+    const vk::SurfaceCapabilitiesKHR& capabilities) {
     auto min_image_count = std::max(3u, capabilities.minImageCount);
     if ((0 < capabilities.maxImageCount) &&
         (capabilities.maxImageCount < min_image_count)) {
@@ -88,14 +88,14 @@ uint32_t choose_swap_min_image_count(
 }
 
 std::vector<vk::raii::ImageView> create_image_views(
-    const vk::SurfaceFormatKHR &swapchain_surface_format,
-    const vk::raii::Device &device,
-    const std::vector<vk::Image> &swapchain_images
+    const vk::SurfaceFormatKHR& swapchain_surface_format,
+    const vk::raii::Device& device,
+    const std::vector<vk::Image>& swapchain_images
 ) {
     std::vector<vk::raii::ImageView> swapchain_image_views;
 
     swapchain_image_views.reserve(swapchain_images.size());
-    for (const auto &image : swapchain_images) {
+    for (const auto& image : swapchain_images) {
         swapchain_image_views.emplace_back(
             create_image_view(image, swapchain_surface_format.format, device));
     }
@@ -111,9 +111,9 @@ struct SwapchainResources {
 };
 
 std::expected<SwapchainResources, std::string>
-create_swapchain(const VulkanContext &context, const glimpse::Window &window) {
-    const auto &physical_device = context.get_physical_device();
-    const auto &surface = context.get_surface();
+create_swapchain(const VulkanContext& context, const glimpse::Window& window) {
+    const auto& physical_device = context.get_physical_device();
+    const auto& surface = context.get_surface();
 
     // Get from physical device
     auto available_formats = physical_device.getSurfaceFormatsKHR(*surface);
@@ -149,7 +149,7 @@ create_swapchain(const VulkanContext &context, const glimpse::Window &window) {
         .setPresentMode(swapchain_present_mode)
         .setClipped(true);
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
     auto swapchain = vk::raii::SwapchainKHR(device, swapchain_create_info);
     const auto swapchain_images = swapchain.getImages();
 
@@ -163,8 +163,8 @@ create_swapchain(const VulkanContext &context, const glimpse::Window &window) {
 } // namespace
 
 std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
-    const VulkanContext &context,
-    const glimpse::Window &window
+    const VulkanContext& context,
+    const glimpse::Window& window
 ) {
     auto creation_res = create_swapchain(context, window);
     if (!creation_res)
@@ -172,12 +172,12 @@ std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
     auto resources = std::move(creation_res).value();
 
     // all hail destructuring, this is pretty cool
-    auto &&[swapchain_extent,
+    auto&& [swapchain_extent,
         swapchain_surface_format,
         swapchain,
         swapchain_images] = std::move(resources);
 
-    const auto &device = context.get_device();
+    const auto& device = context.get_device();
     auto image_views = create_image_views(swapchain_surface_format, device, swapchain_images);
 
     return VulkanSwapchain(
@@ -191,7 +191,7 @@ std::expected<VulkanSwapchain, std::string> VulkanSwapchain::new_vk_swapchain(
 }
 
 VulkanSwapchain::VulkanSwapchain(
-    const VulkanContext &context,
+    const VulkanContext& context,
     vk::raii::SwapchainKHR swapchain,
     std::vector<vk::Image> swapchain_images,
     vk::SurfaceFormatKHR swapchain_surface_format,
@@ -205,9 +205,9 @@ VulkanSwapchain::VulkanSwapchain(
       m_swapchain_image_views(std::move(swapchain_image_views)) {}
 
 std::expected<void, std::string> VulkanSwapchain::recreate_swapchain(
-    const glimpse::Window &window) {
+    const glimpse::Window& window) {
     int width = 0, height = 0;
-    const auto &win = window.get_window();
+    const auto& win = window.get_window();
     glfwGetFramebufferSize(win, &width, &height);
     while ((width == 0 || height == 0) && !glfwWindowShouldClose(win)) {
         glfwGetFramebufferSize(win, &width, &height);
@@ -216,8 +216,8 @@ std::expected<void, std::string> VulkanSwapchain::recreate_swapchain(
     if (glfwWindowShouldClose(win))
         return {};
 
-    const auto &context = m_vk_ctx.get();
-    const auto &device = context.get_device();
+    const auto& context = m_vk_ctx.get();
+    const auto& device = context.get_device();
     device.waitIdle();
 
     cleanup_swapchain();
@@ -227,7 +227,7 @@ std::expected<void, std::string> VulkanSwapchain::recreate_swapchain(
         return std::unexpected(std::move(creation_res).error());
     auto resources = std::move(creation_res).value();
 
-    auto &&[swapchain_extent,
+    auto&& [swapchain_extent,
         swapchain_surface_format,
         swapchain,
         swapchain_images] = std::move(resources);
@@ -249,7 +249,7 @@ void VulkanSwapchain::cleanup_swapchain() {
 
 // Getters
 vk::ResultValue<uint32_t> VulkanSwapchain::acquire_next_image(
-    const vk::raii::Semaphore &semaphore) {
+    const vk::raii::Semaphore& semaphore) {
     return m_swapchain.acquireNextImage(UINT64_MAX, *semaphore, nullptr);
 }
 
@@ -277,11 +277,11 @@ const std::expected<vk::ImageView, std::string> VulkanSwapchain::get_image_view(
     return m_swapchain_image_views[index];
 }
 
-const vk::raii::SwapchainKHR &VulkanSwapchain::get_swapchain() const {
+const vk::raii::SwapchainKHR& VulkanSwapchain::get_swapchain() const {
     return m_swapchain;
 }
 
-const std::vector<vk::Image> &VulkanSwapchain::get_swapchain_images() const {
+const std::vector<vk::Image>& VulkanSwapchain::get_swapchain_images() const {
     return m_swapchain_images;
 }
 

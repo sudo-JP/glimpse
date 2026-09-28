@@ -41,7 +41,7 @@ Window::~Window() {
 
 Window::Window(Window &&other) noexcept : m_window(std::move(other.m_window)) {}
 
-Window &Window::operator=(Window &&other) noexcept {
+Window& Window::operator=(Window &&other) noexcept {
     if (this != &other) {
         if (m_window) {
             m_ref_count--;
