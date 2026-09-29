@@ -6,8 +6,7 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 
 class VulkanSwapchain {
   public:
@@ -57,5 +56,4 @@ class VulkanSwapchain {
     vk::Extent2D m_swapchain_extent;
     std::vector<vk::raii::ImageView> m_swapchain_image_views;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

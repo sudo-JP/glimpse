@@ -7,11 +7,15 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 
 template <typename T> class Entity {
   public:
+    Entity<T>(
+        std::shared_ptr<Mesh> m_mesh,
+        std::shared_ptr<Material> m_material,
+        UniformBuffer<T> m_uniform_buffer
+    );
   private:
     std::shared_ptr<Mesh> m_mesh;
     std::shared_ptr<Material> m_material;
@@ -19,18 +23,4 @@ template <typename T> class Entity {
     std::vector<vk::raii::DescriptorSet> m_desciptor_sets;
 };
 
-template <typename T> class EntityBuilder {
-  public:
-    EntityBuilder<T>();
-    Entity<T> build(DescriptorAllocator& descriptor_allocator);
-
-    EntityBuilder<T>& with_mesh(Mesh);
-
-  private:
-    // TODO: make them optional
-    std::shared_ptr<Mesh> m_mesh;
-    std::shared_ptr<Material> m_material;
-    UniformBuffer<T> m_uniform_buffer;
-};
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

@@ -3,8 +3,7 @@
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/texture.hpp"
 #include <memory>
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 class Material {
   public:
     Material(
@@ -20,5 +19,4 @@ class Material {
     std::shared_ptr<const Texture> m_texture;
     std::shared_ptr<const GraphicsPipeline> m_pipeline;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

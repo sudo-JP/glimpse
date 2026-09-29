@@ -7,8 +7,7 @@
 #include <cstdint>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 // Forward decl cuz apparently wont compile
 class Mesh;
 
@@ -71,5 +70,4 @@ class CommandRecorder {
     vk::raii::CommandPool m_command_pool = nullptr;
     vk::raii::CommandBuffers m_command_buffers;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

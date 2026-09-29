@@ -6,8 +6,7 @@
 #include <optional>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 struct ShaderStageConfig {
     std::string filename;
     std::string vert_entry = "vertMain";
@@ -45,5 +44,4 @@ class GraphicsPipeline {
     vk::raii::PipelineLayout m_pipeline_layout = nullptr;
     vk::raii::Pipeline m_graphics_pipeline = nullptr;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

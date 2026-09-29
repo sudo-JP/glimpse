@@ -17,8 +17,9 @@ struct ContextAppInfo {
     const std::string name;
     const Version version;
 };
+} // namespace glimpse
 
-namespace renderer {
+namespace glimpse::renderer {
 
 /*
  * Hold the context and instance of vulkan
@@ -67,5 +68,4 @@ class VulkanContext {
     vk::raii::SurfaceKHR m_surface = nullptr;
     uint32_t m_graphics_queue_index;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

@@ -8,8 +8,7 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 class CommandRecorder;
 
 class Mesh {
@@ -49,5 +48,4 @@ class Mesh {
     vk::raii::DeviceMemory m_index_buffer_memory = nullptr;
     uint32_t m_indices_size;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

@@ -5,8 +5,7 @@
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 class CommandRecorder;
 class Texture {
   public:
@@ -33,5 +32,4 @@ class Texture {
     vk::raii::ImageView m_texture_image_view = nullptr;
     vk::raii::Sampler m_texture_sampler = nullptr;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

@@ -15,8 +15,7 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 class Renderer {
   public:
     static std::expected<Renderer, std::string> new_renderer();
@@ -66,5 +65,4 @@ class Renderer {
     size_t m_frame_index = 0;
     static constexpr size_t m_max_frames_in_flight = 2;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

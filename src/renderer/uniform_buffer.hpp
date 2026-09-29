@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 
 template <typename T> class UniformBuffer {
   public:
@@ -29,5 +28,4 @@ template <typename T> class UniformBuffer {
     std::vector<vk::raii::DeviceMemory> m_uniform_buffers_memory;
     std::vector<T *> m_uniform_buffers_mapped;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

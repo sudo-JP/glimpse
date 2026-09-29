@@ -3,8 +3,7 @@
 #include <array>
 #include <glm/glm.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 struct VulkanVertex {
     glm::vec2 pos;
     glm::vec3 color;
@@ -20,5 +19,4 @@ struct MVP {
     glm::mat4x4 view;
     glm::mat4x4 proj;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

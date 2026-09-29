@@ -5,8 +5,7 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 class DescriptorAllocator {
   public:
     DescriptorAllocator(
@@ -26,5 +25,4 @@ class DescriptorAllocator {
     std::reference_wrapper<const VulkanContext> m_vk_ctx;
     vk::raii::DescriptorPool m_descriptor_pool = nullptr;
 };
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer

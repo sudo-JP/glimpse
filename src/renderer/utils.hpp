@@ -5,8 +5,7 @@
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
 
-namespace glimpse {
-namespace renderer {
+namespace glimpse::renderer {
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_buffer(
     vk::DeviceSize size,
@@ -34,5 +33,4 @@ vk::raii::ImageView create_image_view(
     vk::Format format,
     const vk::raii::Device& device
 );
-} // namespace renderer
-} // namespace glimpse
+} // namespace glimpse::renderer
