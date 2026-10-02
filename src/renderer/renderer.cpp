@@ -1,6 +1,8 @@
 #include "renderer.hpp"
 #include "renderer/context.hpp"
+#include "renderer/entity.hpp"
 #include "renderer/graphics_pipeline.hpp"
+#include "renderer/material.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
@@ -76,7 +78,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
     );
     if (!pipeline_res)
         return std::unexpected(std::move(pipeline_res).error());
-    auto pipeline = std::move(pipeline_res).value();
+    auto pipeline = std::make_shared<const GraphicsPipeline>(std::move(pipeline_res).value());
 
     auto ubo_res = UniformBuffer<MVP>::new_uniform_buffer(m_max_frames_in_flight, vk_ctx);
     if (!ubo_res)
@@ -87,28 +89,58 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         command_recorder,
         *context
     );
-    if (!texture_res)
-        return std::unexpected(std::move(texture_res).error());
-    auto texture = std::move(texture_res).value();
+    if (!texture_res) return std::unexpected(std::move(texture_res).error());
+    auto texture = std::make_shared<const Texture>(std::move(texture_res).value());
 
-    pipeline.attach_resources<MVP>(
-        m_max_frames_in_flight,
-        ubo.get_uniform_buffers(),
-        texture
+    const std::vector<VulkanVertex> vertices = {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
+    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+    auto mesh_res = Mesh::new_mesh(
+        vertices,
+        indices,
+        vk_ctx,
+        command_recorder
     );
 
-    VulkanCore core{std::move(context),
+    if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
+    const auto mesh = std::move(mesh_res).value();
+    DescriptorAllocator descriptor_allocator(
+        vk_ctx,
+        *pipeline,
+        m_max_frames_in_flight
+    );
+
+    auto material = std::make_shared<const Material>(
+        texture,
+        pipeline
+    );
+    std::unordered_map<std::string, std::shared_ptr<const Texture>> texture_map;
+    texture_map.emplace("swirl", texture);
+
+    std::unordered_map<std::string, std::shared_ptr<const Material>> material_map;
+    material_map.emplace("default", material);
+
+    SceneData scene_data{
+        .pipeline = pipeline,
+        .texture_map = std::move(texture_map),
+        .material_map = std::move(material_map),
+        .entities = {}
+    };
+
+    RuntimeCore core{std::move(context),
+        std::move(descriptor_allocator),
         std::move(swapchain),
-        std::move(command_recorder),
-        std::move(pipeline)};
+        std::move(command_recorder)};
     VulkanSyncPrimitives sync_primitives{std::move(present_complete_semaphores),
         std::move(render_finished_semaphores),
         std::move(in_flight_fences)};
     return Renderer(
         std::move(core),
         std::move(sync_primitives),
-        std::move(ubo),
-        std::move(texture),
+        std::move(scene_data),
         std::move(window)
     );
 }
@@ -158,24 +190,7 @@ std::expected<void, std::string> Renderer::draw_frame() {
 
     m_command_recorder.reset_command_buffer(m_frame_index);
 
-    // TODO: Let's....not put it here
-    // Mesh
-    const std::vector<VulkanVertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
-    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
-    auto mesh_res = Mesh::new_mesh(
-        vertices,
-        indices,
-        *m_vulkan_context,
-        m_command_recorder
-    );
 
-    if (!mesh_res)
-        return std::unexpected(std::move(mesh_res).error());
-    const auto mesh = std::move(mesh_res).value();
 
     // TODO: please dont do this
     // Uniform Buffer
@@ -266,22 +281,23 @@ std::expected<void, std::string> Renderer::present(uint32_t image_idx) {
 }
 
 Renderer::Renderer(
-    VulkanCore core,
+    RuntimeCore core,
     VulkanSyncPrimitives sync_primitives,
-    UniformBuffer<MVP> uniform_buffer,
-    Texture texture,
+    SceneData scene_data,
     Window window
 )
-    : m_uniform_buffer(std::move(uniform_buffer)),
-      m_texture(std::move(texture)),
-      m_vulkan_context(std::move(core.vulkan_context)),
+    : m_vulkan_context(std::move(core.vulkan_context)),
+      m_descriptor_allocator(std::move(core.descriptor_allocator)),
       m_swapchain(std::move(core.swapchain)),
       m_command_recorder(std::move(core.command_recorder)),
-      m_pipeline(std::move(core.pipeline)),
+      m_pipeline(std::move(scene_data.pipeline)),
+      m_texture_map(std::move(scene_data.texture_map)),
+      m_material_map(std::move(scene_data.material_map)),
       m_present_complete_semaphores(
           std::move(sync_primitives.present_complete_semaphores)),
       m_render_finished_semaphores(
           std::move(sync_primitives.render_finished_semaphores)),
       m_in_flight_fences(std::move(sync_primitives.in_flight_fences)),
+      m_entities(std::move(scene_data.entities)),
       m_window(std::move(window)) {}
 } // namespace glimpse::renderer

@@ -8,7 +8,8 @@
 #include <vulkan/vulkan_raii.hpp>
 namespace glimpse::renderer {
 
-template <typename T> class UniformBuffer {
+template <typename T>
+class UniformBuffer {
   public:
     static std::expected<UniformBuffer<T>, std::string> new_uniform_buffer(
         size_t max_frames_in_flight,
