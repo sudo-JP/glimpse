@@ -7,7 +7,6 @@
 #include "renderer/swapchain.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
-#include "renderer/uniform_buffer.hpp"
 #include "window/window.hpp"
 
 #include <cstdint>

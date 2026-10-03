@@ -6,7 +6,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     renderer.cpp
     types.cpp
     mesh.cpp
-    uniform_buffer.cpp
+    uniform.cpp
     utils.cpp
     texture.cpp
     entity.cpp

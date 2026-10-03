@@ -18,7 +18,7 @@ class DescriptorAllocator {
     std::vector<vk::raii::DescriptorSet> attach_resources(
         const std::vector<vk::raii::Buffer>& uniform_buffers,
         const Material& material
-    );
+    ) const;
 
   private:
     size_t m_max_frames_in_flight;

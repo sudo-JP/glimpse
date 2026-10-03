@@ -5,18 +5,28 @@ namespace glimpse::renderer {
     Entity<T>::Entity(
         std::shared_ptr<const Mesh> mesh,
         std::shared_ptr<const Material> material,
-        UniformBuffer<T> uniform_buffer,
+        Uniform<T> uniform,
         const DescriptorAllocator& allocator
-    ) : 
+    ) :
     m_desciptor_sets(std::move(
         allocator.attach_resources<T>(
-            uniform_buffer.get_uniform_buffers(), 
+            uniform.get_uniform_buffers(),
             material.get()
         )
     )),
     m_mesh(std::move(mesh)),
     m_material(std::move(material)),
-    m_uniform_buffer(std::move(uniform_buffer))
+    m_uniform(std::move(uniform))
     {}
+
+    template <typename T>
+    Uniform<T>& Entity<T>::get_uniform() const {
+        return m_uniform;
+    }
+
+    template <typename T>
+    const Mesh& Entity<T>::get_mesh() const {
+        return *m_mesh.get();
+    }
 
 } // namespace glimpse::renderer

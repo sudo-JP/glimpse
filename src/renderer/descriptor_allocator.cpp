@@ -32,7 +32,7 @@ template <typename T>
 std::vector<vk::raii::DescriptorSet> DescriptorAllocator::attach_resources(
     const std::vector<vk::raii::Buffer>& uniform_buffers,
     const Material& material
-) {
+) const {
     const auto& layout = material.get_descriptor_set_layout();
     const auto& texture = material.get_texture();
 
@@ -85,5 +85,5 @@ template std::vector<vk::raii::DescriptorSet>
 DescriptorAllocator::attach_resources<MVP>(
     const std::vector<vk::raii::Buffer> &,
     const Material& material
-);
+) const;
 } // namespace glimpse::renderer

@@ -6,7 +6,7 @@
 #include "renderer/mesh.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
-#include "renderer/uniform_buffer.hpp"
+#include "renderer/uniform.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -80,7 +80,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         return std::unexpected(std::move(pipeline_res).error());
     auto pipeline = std::make_shared<const GraphicsPipeline>(std::move(pipeline_res).value());
 
-    auto ubo_res = UniformBuffer<MVP>::new_uniform_buffer(m_max_frames_in_flight, vk_ctx);
+    auto ubo_res = Uniform<MVP>::new_uniform(m_max_frames_in_flight, vk_ctx);
     if (!ubo_res)
         return std::unexpected(std::move(ubo_res).error());
     auto ubo = std::move(ubo_res).value();
@@ -217,7 +217,13 @@ std::expected<void, std::string> Renderer::draw_frame() {
             0.1f,
             10.0f
         )};
-    m_uniform_buffer.update(m_frame_index, mvp);
+    for (const auto& entity : m_entities) {
+        auto& uniform = entity.get_uniform();
+        const auto& mesh = entity.get_mesh();
+
+        uniform.update(m_frame_index, );
+    }
+    m_uniform.update(m_frame_index, mvp);
 
     // Command buffer
     auto err = m_command_recorder.record_command_buffer(

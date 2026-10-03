@@ -1,4 +1,4 @@
-#include "uniform_buffer.hpp"
+#include "uniform.hpp"
 #include "renderer/types.hpp"
 #include "renderer/utils.hpp"
 #include <algorithm>
@@ -6,10 +6,11 @@
 namespace glimpse::renderer {
 
 template <typename T>
-std::expected<UniformBuffer<T>, std::string>
-UniformBuffer<T>::new_uniform_buffer(
+std::expected<Uniform<T>, std::string>
+Uniform<T>::new_uniform(
     size_t max_frames_in_flight,
-    const VulkanContext& context
+    const VulkanContext& context,
+    T data
 ) {
     std::vector<vk::raii::Buffer> uniform_buffers;
     std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
@@ -34,33 +35,41 @@ UniformBuffer<T>::new_uniform_buffer(
         uniform_buffers_mapped.emplace_back(static_cast<T *>(
             uniform_buffers_memory.back().mapMemory(0, buffer_size)));
     }
-    return UniformBuffer<T>(
+    return Uniform<T>(
         std::move(uniform_buffers),
         std::move(uniform_buffers_memory),
-        std::move(uniform_buffers_mapped)
+        std::move(uniform_buffers_mapped),
+        std::move(data)
     );
 }
 
 template <typename T>
-UniformBuffer<T>::UniformBuffer(
+Uniform<T>::Uniform(
     std::vector<vk::raii::Buffer> uniform_buffers,
     std::vector<vk::raii::DeviceMemory> uniform_buffers_memory,
-    std::vector<T *> uniform_buffers_mapped
+    std::vector<T *> uniform_buffers_mapped,
+    T data
 )
     : m_uniform_buffers(std::move(uniform_buffers)),
       m_uniform_buffers_memory(std::move(uniform_buffers_memory)),
-      m_uniform_buffers_mapped(std::move(uniform_buffers_mapped)) {}
+      m_uniform_buffers_mapped(std::move(uniform_buffers_mapped)),
+      m_data(std::move(data)) {}
 
 template <typename T>
 const std::vector<vk::raii::Buffer> &
-UniformBuffer<T>::get_uniform_buffers() const {
+Uniform<T>::get_uniform_buffers() const {
     return m_uniform_buffers;
 }
 
 template <typename T>
-void UniformBuffer<T>::update(size_t frame_index, const T& data) {
-    *m_uniform_buffers_mapped[frame_index] = data;
+void Uniform<T>::set_data(const T& data) {
+    m_data = data;
 }
 
-template class UniformBuffer<MVP>;
+template <typename T>
+void Uniform<T>::update(size_t frame_index) {
+    *m_uniform_buffers_mapped[frame_index] = m_data;
+}
+
+template class Uniform<MVP>;
 } // namespace glimpse::renderer
