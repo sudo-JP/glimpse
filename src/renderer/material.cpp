@@ -14,4 +14,8 @@ Material::get_descriptor_set_layout() const {
 }
 
 const Texture& Material::get_texture() const { return *m_texture.get(); }
+
+const GraphicsPipeline& Material::get_pipeline() const { 
+    return *m_pipeline.get(); 
+}
 } // namespace glimpse::renderer

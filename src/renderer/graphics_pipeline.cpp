@@ -218,7 +218,7 @@ const vk::raii::PipelineLayout& GraphicsPipeline::get_pipeline_layout() const {
     return m_pipeline_layout;
 }
 
-const vk::raii::DescriptorSetLayout &
+const vk::raii::DescriptorSetLayout&
 GraphicsPipeline::get_descriptor_set_layout() const {
     return m_descriptor_set_layout;
 }

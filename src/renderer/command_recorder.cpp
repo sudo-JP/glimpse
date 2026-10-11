@@ -1,4 +1,5 @@
 #include "command_recorder.hpp"
+#include "renderer/entity.hpp"
 #include "renderer/graphics_pipeline.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/swapchain.hpp"
@@ -152,8 +153,7 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
     uint32_t image_index,
     size_t frame_index,
     const VulkanSwapchain& swapchain,
-    const GraphicsPipeline& pipeline,
-    const Mesh& mesh
+    const std::vector<Entity<MVP>>& entities
 ) {
     // Start command buffer, after select the current command buffer index
     const auto& command_buffer = m_command_buffers[frame_index];
@@ -202,69 +202,74 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
         .setPColorAttachments(&attachment_info);
 
     command_buffer.beginRendering(rendering_info);
-    const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
+    for (auto& entity : entities) {
+        const auto& material = entity.get_material();
+        const auto& pipeline = material.get_pipeline();
+        const auto& graphics_pipeline = pipeline.get_graphics_pipeline();
 
-    command_buffer.bindPipeline(
-        vk::PipelineBindPoint::eGraphics,
-        *graphics_pipeline
-    );
-    command_buffer.setViewport(
-        0,
-        vk::Viewport(0.0f,
-            0.0f,
-            static_cast<float>(swapchain_extent.width),
-            static_cast<float>(swapchain_extent.height),
-            0.0f,
-            1.0f)
-    );
-
-    command_buffer.setScissor(
-        0,
-        vk::Rect2D(vk::Offset2D(0, 0), swapchain_extent)
-    );
-    const auto& vertex_buffer = mesh.get_vertex_buffer();
-    const auto& index_buffer = mesh.get_index_buffer();
-
-    // TODO: add offset to mesh, currently hard code 0
-    command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
-    command_buffer.bindIndexBuffer(
-        *index_buffer,
-        0,
-        vk::IndexType::eUint16
-    ); // TODO: add get type for mesh
-
-    const auto& descriptor_set_option = pipeline.get_descriptor_set(frame_index);
-    if (descriptor_set_option.has_value()) {
-        const auto& pipeline_layout = pipeline.get_pipeline_layout();
-
-        const auto& descriptor_set = descriptor_set_option->get();
-        command_buffer.bindDescriptorSets(
+        command_buffer.bindPipeline(
             vk::PipelineBindPoint::eGraphics,
-            pipeline_layout,
-            0,
-            *descriptor_set,
-            nullptr
+            *graphics_pipeline
         );
-    }
+        command_buffer.setViewport(
+            0,
+            vk::Viewport(0.0f,
+                0.0f,
+                static_cast<float>(swapchain_extent.width),
+                static_cast<float>(swapchain_extent.height),
+                0.0f,
+                1.0f)
+        );
 
-    command_buffer.drawIndexed(mesh.get_indices_size(), 1, 0, 0, 0);
+        command_buffer.setScissor(
+            0,
+            vk::Rect2D(vk::Offset2D(0, 0), swapchain_extent)
+        );
+        const auto& mesh = entity.get_mesh();
+        const auto& vertex_buffer = mesh.get_vertex_buffer();
+        const auto& index_buffer = mesh.get_index_buffer();
 
-    command_buffer.endRendering();
+        // TODO: add offset to mesh, currently hard code 0
+        command_buffer.bindVertexBuffers(0, *vertex_buffer, {0});
+        command_buffer.bindIndexBuffer(
+            *index_buffer,
+            0,
+            vk::IndexType::eUint16
+        ); // TODO: add get type for mesh
 
-    transition_res = transition_swapchain_image(
-        image_index,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::AccessFlagBits2::eColorAttachmentWrite,
-        {},
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eBottomOfPipe,
-        frame_index,
-        swapchain
-    );
-    if (!transition_res) {
-        command_buffer.reset();
-        return std::unexpected(std::move(transition_res).error());
+        const auto& descriptor_set_option = entity.get_descriptor_set(frame_index);
+        if (descriptor_set_option.has_value()) {
+            const auto& pipeline_layout = pipeline.get_pipeline_layout();
+
+            const auto& descriptor_set = descriptor_set_option->get();
+            command_buffer.bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics,
+                pipeline_layout,
+                0,
+                *descriptor_set,
+                nullptr
+            );
+        }
+
+        command_buffer.drawIndexed(mesh.get_indices_size(), 1, 0, 0, 0);
+
+        command_buffer.endRendering();
+
+        transition_res = transition_swapchain_image(
+            image_index,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            {},
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eBottomOfPipe,
+            frame_index,
+            swapchain
+        );
+        if (!transition_res) {
+            command_buffer.reset();
+            return std::unexpected(std::move(transition_res).error());
+        }
     }
 
     command_buffer.end();

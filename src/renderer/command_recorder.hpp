@@ -1,7 +1,7 @@
 #pragma once
 
 #include "renderer/context.hpp"
-#include "renderer/graphics_pipeline.hpp"
+#include "renderer/entity.hpp"
 #include "renderer/swapchain.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -18,8 +18,7 @@ class CommandRecorder {
         uint32_t image_index,
         size_t frame_index,
         const VulkanSwapchain& swapchain,
-        const GraphicsPipeline& pipeline,
-        const Mesh& mesh
+        const std::vector<Entity<MVP>>& entities
     );
 
     void reset_command_buffer(size_t index);
@@ -62,8 +61,7 @@ class CommandRecorder {
     ) const;
 
     vk::raii::CommandBuffer begin_single_command_time_commands() const;
-    void end_single_time_command(
-        vk::raii::CommandBuffer &&command_buffer) const;
+    void end_single_time_command(vk::raii::CommandBuffer &&command_buffer) const;
 
     // Members
     std::reference_wrapper<const VulkanContext> m_vk_ctx;

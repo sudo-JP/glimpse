@@ -16,15 +16,19 @@ class Entity {
         std::shared_ptr<const Mesh> mesh,
         std::shared_ptr<const Material> material,
         Uniform<T> uniform,
-        const DescriptorAllocator& allocator
+        DescriptorAllocator& allocator
     );
 
     // getters
-    Uniform<T>& get_uniform() const;
+    Uniform<T>& get_uniform();
     const Mesh& get_mesh() const;
+    const Material& get_material() const;
+
+    const std::optional<std::reference_wrapper<const vk::raii::DescriptorSet>>
+    get_descriptor_set(size_t index) const;
 
   private:
-    std::vector<vk::raii::DescriptorSet> m_desciptor_sets;
+    std::vector<vk::raii::DescriptorSet> m_descriptor_sets;
     std::shared_ptr<const Mesh> m_mesh;
     std::shared_ptr<const Material> m_material;
     Uniform<T> m_uniform;

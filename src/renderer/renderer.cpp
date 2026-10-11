@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -80,9 +81,8 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         return std::unexpected(std::move(pipeline_res).error());
     auto pipeline = std::make_shared<const GraphicsPipeline>(std::move(pipeline_res).value());
 
-    auto ubo_res = Uniform<MVP>::new_uniform(m_max_frames_in_flight, vk_ctx);
-    if (!ubo_res)
-        return std::unexpected(std::move(ubo_res).error());
+    auto ubo_res = Uniform<MVP>::new_uniform(m_max_frames_in_flight, vk_ctx, MVP{});
+    if (!ubo_res) return std::unexpected(std::move(ubo_res).error());
     auto ubo = std::move(ubo_res).value();
     auto texture_res = Texture::new_texture(
         std::string(SHADER_DIR) + "/swirl.ktx2",
@@ -105,8 +105,9 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         command_recorder
     );
 
+
     if (!mesh_res) return std::unexpected(std::move(mesh_res).error());
-    const auto mesh = std::move(mesh_res).value();
+    const auto mesh = std::make_shared<const Mesh>(std::move(mesh_res).value());
     DescriptorAllocator descriptor_allocator(
         vk_ctx,
         *pipeline,
@@ -123,11 +124,20 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
     std::unordered_map<std::string, std::shared_ptr<const Material>> material_map;
     material_map.emplace("default", material);
 
+    auto entity = Entity<MVP>(
+        mesh,
+        material_map["default"],
+        std::move(ubo),
+        descriptor_allocator
+    );
+    std::vector<Entity<MVP>> entities;
+    entities.push_back(std::move(entity));
+
     SceneData scene_data{
         .pipeline = pipeline,
         .texture_map = std::move(texture_map),
         .material_map = std::move(material_map),
-        .entities = {}
+        .entities = std::move(entities)
     };
 
     RuntimeCore core{std::move(context),
@@ -217,25 +227,19 @@ std::expected<void, std::string> Renderer::draw_frame() {
             0.1f,
             10.0f
         )};
-    for (const auto& entity : m_entities) {
+
+    for (auto& entity : m_entities) {
         auto& uniform = entity.get_uniform();
-        const auto& mesh = entity.get_mesh();
-
-        uniform.update(m_frame_index, );
+        uniform.set_data(mvp);
+        uniform.update(m_frame_index);
     }
-    m_uniform.update(m_frame_index, mvp);
-
-    // Command buffer
     auto err = m_command_recorder.record_command_buffer(
         image_idx,
         m_frame_index,
         m_swapchain,
-        m_pipeline,
-        mesh
+        m_entities
     );
-    if (!err)
-        return std::unexpected(std::move(err).error());
-
+    if (!err) return std::unexpected(std::move(err).error());
     submit();
     auto present_res = present(image_idx);
     if (!present_res)
