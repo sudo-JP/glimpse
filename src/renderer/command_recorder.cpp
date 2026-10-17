@@ -249,29 +249,30 @@ std::expected<void, std::string> CommandRecorder::record_command_buffer(
                 *descriptor_set,
                 nullptr
             );
+        } else {
+            return std::unexpected("couldn't get descriptor set index");
         }
 
         command_buffer.drawIndexed(mesh.get_indices_size(), 1, 0, 0, 0);
-
-        command_buffer.endRendering();
-
-        transition_res = transition_swapchain_image(
-            image_index,
-            vk::ImageLayout::eColorAttachmentOptimal,
-            vk::ImageLayout::ePresentSrcKHR,
-            vk::AccessFlagBits2::eColorAttachmentWrite,
-            {},
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits2::eBottomOfPipe,
-            frame_index,
-            swapchain
-        );
-        if (!transition_res) {
-            command_buffer.reset();
-            return std::unexpected(std::move(transition_res).error());
-        }
     }
 
+    command_buffer.endRendering();
+
+    transition_res = transition_swapchain_image(
+        image_index,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        {},
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eBottomOfPipe,
+        frame_index,
+        swapchain
+    );
+    if (!transition_res) {
+        command_buffer.reset();
+        return std::unexpected(std::move(transition_res).error());
+    }
     command_buffer.end();
     return {};
 }

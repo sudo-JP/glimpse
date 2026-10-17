@@ -5,12 +5,12 @@
 
 namespace glimpse::renderer {
 struct VulkanVertex {
-    glm::vec2 pos;
-    glm::vec3 color;
+    glm::vec3 pos;
+    //glm::vec3 color;
     glm::vec2 tex_coord;
 
     static vk::VertexInputBindingDescription get_binding_description();
-    static std::array<vk::VertexInputAttributeDescription, 3>
+    static std::array<vk::VertexInputAttributeDescription, 2>
     get_attribute_descriptions();
 };
 

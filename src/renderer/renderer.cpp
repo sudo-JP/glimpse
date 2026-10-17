@@ -15,11 +15,44 @@
 #include <cstdlib>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 namespace glimpse::renderer {
+namespace {
+    std::pair<std::vector<VulkanVertex>, std::vector<uint16_t>> create_vertices() {
+        const std::vector<VulkanVertex> vertices = {
+            // Pyramid base, Y is flip so pos means down
+            {{-0.5, 0.5, 0.5}, {0.0, 0.0}},
+            {{-0.5, 0.5, -0.5}, {0.0, 0.0}},
+            {{0.5, 0.5, 0.5}, {0.0, 0.0}},
+            {{0.5, 0.5, -0.5}, {0.0, 0.0}},
+            // Apex vertex
+            {{0.0, -0.5, 0.0}, {0.0, 0.0}},
+        };
+        const std::vector<uint16_t> indices = {
+            // Base
+            0, 1, 2,
+            0, 2, 3,
+            // Front Side
+            0, 2, 4,
+            // Left Side
+            0, 1, 4,
+            // Right Side
+            2, 3, 4,
+            // Back Side
+            1, 3, 4,  
+        };
+        
+        return std::make_pair(
+            vertices,
+            indices
+        );
+    }
+} // namespace
+
 std::expected<Renderer, std::string> Renderer::new_renderer() {
     constexpr int width = 1920, height = 1080;
     auto window_res = Window::new_window(width, height, std::move("glimpse of..."));
@@ -92,12 +125,9 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
     if (!texture_res) return std::unexpected(std::move(texture_res).error());
     auto texture = std::make_shared<const Texture>(std::move(texture_res).value());
 
-    const std::vector<VulkanVertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
-    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+    // Pyramid vertices
+    const auto [vertices, indices] = std::move(create_vertices());
+
     auto mesh_res = Mesh::new_mesh(
         vertices,
         indices,
