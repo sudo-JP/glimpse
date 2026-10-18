@@ -12,4 +12,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     entity.cpp
     descriptor_allocator.cpp
     material.cpp
+    camera.cpp
 )

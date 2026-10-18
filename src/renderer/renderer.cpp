@@ -34,16 +34,16 @@ namespace {
         };
         const std::vector<uint16_t> indices = {
             // Base
-            0, 1, 2,
-            0, 2, 3,
-            // Front Side
+            0, 1, 3,
+            0, 3, 2,
+            // Front side
             0, 2, 4,
-            // Left Side
-            0, 1, 4,
-            // Right Side
+            // Left side
+            0, 4, 1,
+            // Right side
             2, 3, 4,
-            // Back Side
-            1, 3, 4,
+            // Back side
+            1, 4, 3,
         };
 
         return std::make_pair(

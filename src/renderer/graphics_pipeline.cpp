@@ -117,7 +117,7 @@ GraphicsPipeline::new_graphics_pipeline(
         .setRasterizerDiscardEnable(vk::False)
         .setPolygonMode(vk::PolygonMode::eFill)
         .setCullMode(vk::CullModeFlagBits::eBack)
-        .setFrontFace(vk::FrontFace::eClockwise)
+        .setFrontFace(vk::FrontFace::eCounterClockwise)
         .setDepthBiasEnable(vk::False)
         .setLineWidth(1.0f);
 
