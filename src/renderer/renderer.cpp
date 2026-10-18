@@ -24,13 +24,13 @@ namespace glimpse::renderer {
 namespace {
     std::pair<std::vector<VulkanVertex>, std::vector<uint16_t>> create_vertices() {
         const std::vector<VulkanVertex> vertices = {
-            // Pyramid base, Y is flip so pos means down
-            {{-0.5, 0.5, 0.5}, {0.0, 0.0}},
+            // Pyramid base
+            {{-0.5, -0.5, -0.5}, {0.0, 1.0}},
             {{-0.5, 0.5, -0.5}, {0.0, 0.0}},
-            {{0.5, 0.5, 0.5}, {0.0, 0.0}},
-            {{0.5, 0.5, -0.5}, {0.0, 0.0}},
+            {{0.5, -0.5, -0.5}, {1.0, 1.0}},
+            {{0.5, 0.5, -0.5}, {1.0, 0.0}},
             // Apex vertex
-            {{0.0, -0.5, 0.0}, {0.0, 0.0}},
+            {{0.0, 0.0, 0.5}, {0.5, 0.5}},
         };
         const std::vector<uint16_t> indices = {
             // Base
@@ -43,9 +43,9 @@ namespace {
             // Right Side
             2, 3, 4,
             // Back Side
-            1, 3, 4,  
+            1, 3, 4,
         };
-        
+
         return std::make_pair(
             vertices,
             indices
@@ -248,7 +248,7 @@ std::expected<void, std::string> Renderer::draw_frame() {
         .view = glm::lookAt(
             glm::vec3(2.0f, 2.0f, 2.0f),
             glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 0.0f, 1.0f)
+            glm::vec3(0.0f, 0.0f, -1.0f)
         ),
         .proj = glm::perspective(
             glm::radians(45.0f),

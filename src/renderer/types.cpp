@@ -14,7 +14,7 @@ VulkanVertex::get_attribute_descriptions() {
     auto pos = vk::VertexInputAttributeDescription()
         .setLocation(0)
         .setBinding(0)
-        .setFormat(vk::Format::eR32G32Sfloat)
+        .setFormat(vk::Format::eR32G32B32Sfloat)
         .setOffset(offsetof(VulkanVertex, pos));
     /*auto color = vk::VertexInputAttributeDescription()
         .setLocation(1)
