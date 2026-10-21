@@ -7,6 +7,7 @@
 #include "renderer/swapchain.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
+#include "renderer/camera.hpp"
 #include "window/window.hpp"
 
 #include <cstdint>
@@ -74,5 +75,7 @@ class Renderer {
     // Frame tracking
     size_t m_frame_index = 0;
     static constexpr size_t m_max_frames_in_flight = 2;
+
+    Camera m_camera{glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
 };
 } // namespace glimpse::renderer
