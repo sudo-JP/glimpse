@@ -9,7 +9,7 @@
 namespace glimpse::renderer {
 
 class VulkanSwapchain {
-  public:
+public:
     static std::expected<VulkanSwapchain, std::string> new_vk_swapchain(
         const renderer::VulkanContext& context,
         const glimpse::Window& window
@@ -38,7 +38,7 @@ class VulkanSwapchain {
     const vk::raii::SwapchainKHR& get_swapchain() const;
     const std::vector<vk::Image>& get_swapchain_images() const;
 
-  private:
+private:
     VulkanSwapchain(
         const VulkanContext& context,
         vk::raii::SwapchainKHR swapchain,

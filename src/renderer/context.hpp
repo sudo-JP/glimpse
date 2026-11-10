@@ -25,7 +25,7 @@ namespace glimpse::renderer {
  * Hold the context and instance of vulkan
  * */
 class VulkanContext {
-  public:
+public:
     static std::expected<VulkanContext, std::string> new_vk_context(
         const ContextAppInfo& app_context,
         const ContextAppInfo& engine_context,
@@ -40,7 +40,7 @@ class VulkanContext {
     const uint32_t get_graphics_queue_index() const;
     const vk::raii::Queue& get_queue() const;
 
-  private:
+private:
     struct DeviceResources {
         vk::raii::PhysicalDevice physical_device;
         vk::raii::Device device;

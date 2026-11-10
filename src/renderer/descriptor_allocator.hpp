@@ -7,7 +7,7 @@
 
 namespace glimpse::renderer {
 class DescriptorAllocator {
-  public:
+public:
     DescriptorAllocator(
         const VulkanContext& context,
         const GraphicsPipeline& pipeline,
@@ -20,7 +20,7 @@ class DescriptorAllocator {
         const Material& material
     ) const;
 
-  private:
+private:
     size_t m_max_frames_in_flight;
     std::reference_wrapper<const VulkanContext> m_vk_ctx;
     vk::raii::DescriptorPool m_descriptor_pool = nullptr;

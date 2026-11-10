@@ -19,12 +19,12 @@
 #include <vulkan/vulkan_raii.hpp>
 namespace glimpse::renderer {
 class Renderer {
-  public:
+public:
     static std::expected<Renderer, std::string> new_renderer();
     void run();
     std::expected<void, std::string> draw_frame();
 
-  private:
+private:
     struct RuntimeCore {
         std::unique_ptr<VulkanContext> vulkan_context;
         DescriptorAllocator descriptor_allocator;

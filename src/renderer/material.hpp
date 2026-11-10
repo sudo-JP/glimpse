@@ -5,7 +5,7 @@
 #include <memory>
 namespace glimpse::renderer {
 class Material {
-  public:
+public:
     Material(
         std::shared_ptr<const Texture> texture,
         std::shared_ptr<const GraphicsPipeline> pipeline
@@ -16,7 +16,7 @@ class Material {
     const Texture& get_texture() const;
     const GraphicsPipeline& get_pipeline() const;
 
-  private:
+private:
     std::shared_ptr<const Texture> m_texture;
     std::shared_ptr<const GraphicsPipeline> m_pipeline;
 };

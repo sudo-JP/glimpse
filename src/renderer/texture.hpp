@@ -8,7 +8,7 @@
 namespace glimpse::renderer {
 class CommandRecorder;
 class Texture {
-  public:
+public:
     static std::expected<Texture, std::string> new_texture(
         const std::string& filename,
         const CommandRecorder& recorder,
@@ -19,7 +19,7 @@ class Texture {
     const vk::raii::Sampler& get_texture_sampler() const;
     const vk::raii::ImageView& get_texture_image_view() const;
 
-  private:
+private:
     Texture(
         vk::raii::Image texture_image,
         vk::raii::DeviceMemory texture_image_memory,

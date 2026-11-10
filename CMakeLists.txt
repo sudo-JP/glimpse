@@ -10,7 +10,11 @@ find_package(Vulkan REQUIRED MODULE)
 find_package(Ktx CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(
+    FFMPEG REQUIRED IMPORTED_TARGET libavcodec libavformat libavutil libswscale
+)
 
 # CMake work
 # Images
@@ -42,4 +46,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm::glm
     KTX::ktx
+    PkgConfig::FFMPEG
 )

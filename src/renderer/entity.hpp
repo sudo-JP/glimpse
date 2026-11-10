@@ -11,7 +11,7 @@ namespace glimpse::renderer {
 
 template <typename T>
 class Entity {
-  public:
+public:
     Entity(
         std::shared_ptr<const Mesh> mesh,
         std::shared_ptr<const Material> material,
@@ -27,7 +27,7 @@ class Entity {
     const std::optional<std::reference_wrapper<const vk::raii::DescriptorSet>>
     get_descriptor_set(size_t index) const;
 
-  private:
+private:
     std::vector<vk::raii::DescriptorSet> m_descriptor_sets;
     std::shared_ptr<const Mesh> m_mesh;
     std::shared_ptr<const Material> m_material;

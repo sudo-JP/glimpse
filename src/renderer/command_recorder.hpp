@@ -12,7 +12,7 @@ namespace glimpse::renderer {
 class Mesh;
 
 class CommandRecorder {
-  public:
+public:
     CommandRecorder(const VulkanContext& context, size_t max_frames_in_flight);
     std::expected<void, std::string> record_command_buffer(
         uint32_t image_index,
@@ -39,7 +39,7 @@ class CommandRecorder {
     const vk::raii::CommandBuffer& get_command_buffer(size_t index) const;
     const vk::raii::CommandPool& get_command_pool() const;
 
-  private:
+private:
     // Private helpers
     std::expected<void, std::string> transition_swapchain_image(
         uint32_t image_index,

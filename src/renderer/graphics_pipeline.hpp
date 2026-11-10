@@ -13,7 +13,7 @@ struct ShaderStageConfig {
 };
 
 class GraphicsPipeline {
-  public:
+public:
     static std::expected<GraphicsPipeline, std::string> new_graphics_pipeline(
         const ShaderStageConfig& shader_config,
         size_t max_frames_in_flight,
@@ -28,7 +28,7 @@ class GraphicsPipeline {
 
     const vk::raii::PipelineLayout& get_pipeline_layout() const;
 
-  private:
+private:
     GraphicsPipeline(
         const VulkanContext& context,
         vk::raii::DescriptorSetLayout descriptor_set_layout,

@@ -7,7 +7,7 @@
 
 namespace glimpse {
 class Window {
-  public:
+public:
     // Constructor like rust cuz i hate this language
     static std::expected<Window, std::string>
     new_window(int width, int height, std::string title);
@@ -22,7 +22,7 @@ class Window {
 
     GLFWwindow*get_window() const;
 
-  private:
+private:
     static inline size_t m_ref_count = 0;
     Window(std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window);
     std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> m_window{nullptr,

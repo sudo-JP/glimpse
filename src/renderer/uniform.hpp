@@ -10,7 +10,7 @@ namespace glimpse::renderer {
 
 template <typename T>
 class Uniform {
-  public:
+public:
     static std::expected<Uniform<T>, std::string> new_uniform(
         size_t max_frames_in_flight,
         const VulkanContext& context,
@@ -21,7 +21,7 @@ class Uniform {
     void update(size_t frame_index);
     const std::vector<vk::raii::Buffer>& get_uniform_buffers() const;
 
-  private:
+private:
     Uniform(
         std::vector<vk::raii::Buffer> uniform_buffers,
         std::vector<vk::raii::DeviceMemory> uniform_buffers_memory,

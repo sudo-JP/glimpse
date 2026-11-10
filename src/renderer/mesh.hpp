@@ -12,7 +12,7 @@ namespace glimpse::renderer {
 class CommandRecorder;
 
 class Mesh {
-  public:
+public:
     // Fancy way to say only accept uint
     template <typename T>
         requires std::same_as<T, uint16_t> || std::same_as<T, uint32_t>
@@ -29,7 +29,7 @@ class Mesh {
     uint32_t get_vertices_size() const;
     uint32_t get_indices_size() const;
 
-  private:
+private:
     struct AllocatedBuffer {
         vk::raii::Buffer buffer;
         vk::raii::DeviceMemory buffer_memory;
