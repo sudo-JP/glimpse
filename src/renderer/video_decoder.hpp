@@ -25,16 +25,23 @@ struct SwsContextDeleter {
 
 class VideoDecoder {
 public:
-static std::expected<VideoDecoder, std::string> new_video_decoder(
-    const std::string& filename
-);
+    static std::expected<VideoDecoder, std::string> new_video_decoder(
+        const std::string& filename
+    );
 private:
-VideoDecoder();
-~VideoDecoder();
+    VideoDecoder();
+    ~VideoDecoder();
 
-std::unique_ptr<AVFormatContext, AVFormatContextDeleter> m_format_ctx;
-std::unique_ptr<AVCodecContext, AVCodecContextDeleter> m_codec;
-std::unique_ptr<SwsContext, SwsContextDeleter> m_sws_ctx;
-int m_stream_idx = 0;
+    VideoDecoder(VideoDecoder &&other) noexcept;
+    VideoDecoder& operator=(VideoDecoder &&other) noexcept;
+
+    VideoDecoder(const VideoDecoder&) = delete;
+    VideoDecoder& operator=(const VideoDecoder&) = delete;
+
+
+    std::unique_ptr<AVFormatContext, AVFormatContextDeleter> m_format_ctx;
+    std::unique_ptr<AVCodecContext, AVCodecContextDeleter> m_codec;
+    std::unique_ptr<SwsContext, SwsContextDeleter> m_sws_ctx;
+    int m_stream_idx = 0;
 };
 } // namespace glimpse::renderer
