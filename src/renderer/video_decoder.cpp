@@ -1,10 +1,12 @@
 #include "video_decoder.hpp"
 #include <cstdint>
+#include <utility>
+
 extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-#include <libavutil/imgutils.h>
+    #include <libavformat/avformat.h>
+    #include <libavcodec/avcodec.h>
+    #include <libswscale/swscale.h>
+    #include <libavutil/imgutils.h>
 }
 #include <memory>
 
@@ -83,14 +85,31 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
         }
     }
 
-
-
-    return VideoDecoder();
+    return VideoDecoder(
+        std::move(format_ctx),
+        std::move(codec_ctx),
+        std::move(sws_ctx)
+    );
 }
 
-VideoDecoder::~VideoDecoder() {
-
+std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame() {
+    AVFrame *frame; 
+    int ret = avcodec_receive_frame(m_codec.get(), frame);
+    while (ret == AVERROR(EAGAIN)) {
+        
+    }
+    return {};
 }
 
-VideoDecoder::VideoDecoder() {}
+void VideoDecoder::reset() {
+    
+}
+
+VideoDecoder::VideoDecoder(
+    std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx,
+    std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec,
+    std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx
+) : m_format_ctx(std::move(format_ctx)),
+m_codec(std::move(codec)),
+m_sws_ctx(std::move(sws_ctx)) {}
 } // namespace glimpse::renderer

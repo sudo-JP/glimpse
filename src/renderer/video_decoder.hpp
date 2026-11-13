@@ -1,5 +1,6 @@
 #pragma once
 
+#include "renderer/types.hpp"
 #include <expected>
 #include <memory>
 #include <string>
@@ -23,20 +24,28 @@ struct SwsContextDeleter {
     void operator()(SwsContext* ctx) const { if (ctx) sws_freeContext(ctx); }
 };
 
+
 class VideoDecoder {
 public:
+    enum class NextFrameError {
+        EndOfFile,
+        ReadError,
+    };
+
     static std::expected<VideoDecoder, std::string> new_video_decoder(
         const std::string& filename
     );
+
+    std::expected<VideoFrame, NextFrameError> next_frame();
+
+    /// Reset stream of video to start
+    void reset();
 private:
-    VideoDecoder();
-    ~VideoDecoder();
-
-    VideoDecoder(VideoDecoder &&other) noexcept;
-    VideoDecoder& operator=(VideoDecoder &&other) noexcept;
-
-    VideoDecoder(const VideoDecoder&) = delete;
-    VideoDecoder& operator=(const VideoDecoder&) = delete;
+    VideoDecoder(
+        std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx,
+        std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec,
+        std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx
+    );
 
 
     std::unique_ptr<AVFormatContext, AVFormatContextDeleter> m_format_ctx;
