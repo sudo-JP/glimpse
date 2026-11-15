@@ -1,4 +1,5 @@
 #include "video_decoder.hpp"
+#include "renderer/types.hpp"
 #include <cstdint>
 #include <utility>
 
@@ -12,7 +13,13 @@ extern "C" {
 
 namespace glimpse::renderer {
 namespace {
-    
+    struct AVFrameDeleter {
+        void operator()(AVFrame* frame) const { if (frame) av_frame_free(&frame); }
+    };
+
+    struct AVPacketDeleter {
+        void operator()(AVPacket* packet) const { if (packet) av_packet_free(&packet); }
+    };
 } // namespace
 
 std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
@@ -66,39 +73,56 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
     if (!raw_sws_ctx) return std::unexpected("could not create sws context");
     auto sws_ctx = std::unique_ptr<SwsContext, SwsContextDeleter>(raw_sws_ctx);
 
-    // Allocate rgb buffer
-
-    uint8_t *rgb_data[4];
-    int rgb_linesize[4];
-    av_image_alloc(rgb_data, rgb_linesize, width, height, AV_PIX_FMT_RGB24, 1);
-
-    AVPacket *packet = av_packet_alloc();
-    if (!packet) return std::unexpected("could not create packet");
-
-    AVFrame *frame = av_frame_alloc();
-    if (!frame) return std::unexpected("could not create frame");
-    int frame_count = 0;
-
-    while (av_read_frame(format_ctx.get(), packet)) {
-        if (packet->stream_index == video_stream_idx) {
-
-        }
-    }
 
     return VideoDecoder(
         std::move(format_ctx),
         std::move(codec_ctx),
-        std::move(sws_ctx)
+        std::move(sws_ctx),
+        video_stream_idx
     );
 }
 
 std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame() {
-    AVFrame *frame; 
-    int ret = avcodec_receive_frame(m_codec.get(), frame);
-    while (ret == AVERROR(EAGAIN)) {
-        
+    // Allocate rgb buffer
+    //uint8_t *rgb_data[4];
+    //int rgb_linesize[4];
+    //av_image_alloc(rgb_data, rgb_linesize, width, height, AV_PIX_FMT_RGB24, 1);
+    AVFrame *raw_av_frame = av_frame_alloc();
+    if (!raw_av_frame) return std::unexpected(VideoDecoder::NextFrameError::AllocationError);
+    auto av_frame = std::unique_ptr<AVFrame, AVFrameDeleter>(raw_av_frame);
+
+    AVPacket *raw_packet = av_packet_alloc();
+    if (!raw_packet) return std::unexpected(VideoDecoder::NextFrameError::AllocationError);
+    auto packet = std::unique_ptr<AVPacket, AVPacketDeleter>(raw_packet);
+
+
+    // Setup frame to be returned
+    VideoFrame frame;
+    int width = m_codec->width;
+    int height = m_codec->height;
+
+    frame.width = width;
+    frame.height = height;
+
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, width, height, 1);
+    frame.pixels.resize(num_bytes);
+
+    av_image_fill_arrays(av_frame->data, av_frame->linesize, frame.pixels.data(), AV_PIX_FMT_RGB24, width, height, 1);
+    while (true) {
+        int ret = av_read_frame(m_format_ctx.get(), raw_packet);
+        if (ret == AVERROR_EOF) return std::unexpected(VideoDecoder::NextFrameError::EndOfFile);
+        if (raw_packet->stream_index != m_stream_idx) continue;
+
+        // Send packet
+        ret = avcodec_send_packet(m_codec.get(), packet.get());
+        if (ret != 0) continue;
+
+        while (avcodec_receive_frame(m_codec.get(), av_frame.get())) {
+            //sws_scale(m_sws_ctx.get(), av_frame->data, av_frame->linesize, 0, height,
+        }
     }
-    return {};
+
+    return frame;
 }
 
 void VideoDecoder::reset() {
@@ -108,8 +132,9 @@ void VideoDecoder::reset() {
 VideoDecoder::VideoDecoder(
     std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx,
     std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec,
-    std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx
+    std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx,
+    int stream_idx
 ) : m_format_ctx(std::move(format_ctx)),
 m_codec(std::move(codec)),
-m_sws_ctx(std::move(sws_ctx)) {}
+m_sws_ctx(std::move(sws_ctx)), m_stream_idx(stream_idx) {}
 } // namespace glimpse::renderer

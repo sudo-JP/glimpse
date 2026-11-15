@@ -25,6 +25,7 @@ struct MVP {
 struct VideoFrame {
     int width; 
     int height;
+    int linesize;
     std::vector<uint8_t> pixels;
 };
 } // namespace glimpse::renderer

@@ -30,6 +30,7 @@ public:
     enum class NextFrameError {
         EndOfFile,
         ReadError,
+        AllocationError,
     };
 
     static std::expected<VideoDecoder, std::string> new_video_decoder(
@@ -44,13 +45,14 @@ private:
     VideoDecoder(
         std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx,
         std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec,
-        std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx
+        std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx,
+        int stream_idx
     );
 
 
     std::unique_ptr<AVFormatContext, AVFormatContextDeleter> m_format_ctx;
     std::unique_ptr<AVCodecContext, AVCodecContextDeleter> m_codec;
     std::unique_ptr<SwsContext, SwsContextDeleter> m_sws_ctx;
-    int m_stream_idx = 0;
+    int m_stream_idx;
 };
 } // namespace glimpse::renderer
