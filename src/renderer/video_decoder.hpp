@@ -24,6 +24,14 @@ struct SwsContextDeleter {
     void operator()(SwsContext* ctx) const { if (ctx) sws_freeContext(ctx); }
 };
 
+struct AVFrameDeleter {
+    void operator()(AVFrame* frame) const { if (frame) av_frame_free(&frame); }
+};
+
+struct AVPacketDeleter {
+    void operator()(AVPacket* packet) const { if (packet) av_packet_free(&packet); }
+};
+
 
 class VideoDecoder {
 public:
@@ -42,10 +50,21 @@ public:
     /// Reset stream of video to start
     void reset();
 private:
+    struct AVContext {
+        std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx;
+        std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec;
+        std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx;
+    };
+
+    struct FrameDecoder {
+        std::unique_ptr<AVFrame, AVFrameDeleter> av_frame;
+        std::unique_ptr<AVFrame, AVFrameDeleter> rgb_frame;
+        std::unique_ptr<AVPacket, AVPacketDeleter> packet;
+    };
+
     VideoDecoder(
-        std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx,
-        std::unique_ptr<AVCodecContext, AVCodecContextDeleter> codec,
-        std::unique_ptr<SwsContext, SwsContextDeleter> sws_ctx,
+        AVContext ctx,        
+        FrameDecoder frame_decoder,
         int stream_idx
     );
 
@@ -53,6 +72,11 @@ private:
     std::unique_ptr<AVFormatContext, AVFormatContextDeleter> m_format_ctx;
     std::unique_ptr<AVCodecContext, AVCodecContextDeleter> m_codec;
     std::unique_ptr<SwsContext, SwsContextDeleter> m_sws_ctx;
+
+    std::unique_ptr<AVFrame, AVFrameDeleter> m_av_frame;
+    std::unique_ptr<AVFrame, AVFrameDeleter> m_rgb_frame;
+    std::unique_ptr<AVPacket, AVPacketDeleter> m_packet;
+
     int m_stream_idx;
 };
 } // namespace glimpse::renderer
