@@ -77,6 +77,7 @@ private:
     std::unique_ptr<AVFrame, AVFrameDeleter> m_rgb_frame;
     std::unique_ptr<AVPacket, AVPacketDeleter> m_packet;
 
+    bool m_flushing = false;
     int m_stream_idx;
 };
 } // namespace glimpse::renderer

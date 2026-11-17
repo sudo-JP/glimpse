@@ -100,51 +100,69 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
 }
 
 std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame() {
-    // Setup frame to be returned
+    const int width = m_codec->width;
+    const int height = m_codec->height;
+
     VideoFrame frame;
-    int width = m_codec->width;
-    int height = m_codec->height;
     frame.width = width;
     frame.height = height;
+    frame.pixels.resize(width * height * 3);
 
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, width, height, 1);
-    frame.pixels.resize(num_bytes);
+    uint8_t* dest_data[4] = { frame.pixels.data(), nullptr, nullptr, nullptr };
+    int dest_linesize[4] = { width * 3, 0, 0, 0 };
 
-    av_image_fill_arrays(m_av_frame->data, m_av_frame->linesize, frame.pixels.data(), AV_PIX_FMT_RGB24, width, height, 1);
     while (true) {
-        int ret = av_read_frame(m_format_ctx.get(), m_packet.get());
-        if (ret == AVERROR_EOF) return std::unexpected(VideoDecoder::NextFrameError::EndOfFile);
-        if (m_packet->stream_index != m_stream_idx) continue;
+        int ret = avcodec_receive_frame(m_codec.get(), m_av_frame.get());
+        if (ret == 0) {
+            sws_scale(
+                m_sws_ctx.get(),
+                m_av_frame->data,
+                m_av_frame->linesize,
+                0,
+                height,
+                dest_data,
+                dest_linesize
+            );
+            av_frame_unref(m_av_frame.get());
+            return frame;
+        }
+        if (ret == AVERROR_EOF) {
+            return std::unexpected(VideoDecoder::NextFrameError::EndOfFile);
+        }
+        if (ret != AVERROR(EAGAIN)) {
+            return std::unexpected(VideoDecoder::NextFrameError::ReadError);
+        }
 
-        // Send packet
+        if (m_flushing) return std::unexpected(VideoDecoder::NextFrameError::EndOfFile);
+
+        ret = av_read_frame(m_format_ctx.get(), m_packet.get());
+        if (ret == AVERROR_EOF) {
+            m_flushing = true;
+            avcodec_send_packet(m_codec.get(), nullptr);
+            continue;
+        }
+        if (ret < 0) {
+            return std::unexpected(VideoDecoder::NextFrameError::ReadError);
+        }
+
+        if (m_packet->stream_index != m_stream_idx) {
+            av_packet_unref(m_packet.get());
+            continue;
+        }
+
         ret = avcodec_send_packet(m_codec.get(), m_packet.get());
-        if (ret != 0) continue;
+        av_packet_unref(m_packet.get());
 
-        ret = avcodec_receive_frame(m_codec.get(), m_av_frame.get());
-        if (ret != 0) continue;
-
-        sws_scale(
-            m_sws_ctx.get(), 
-            m_av_frame->data, 
-            m_av_frame->linesize, 
-            0, 
-            height, 
-            m_rgb_frame->data, 
-            m_rgb_frame->linesize
-        );
-
-        frame.width = m_rgb_frame->width;
-        frame.height = m_rgb_frame->height;
-
-        return frame;
+        if (ret < 0) {
+            return std::unexpected(VideoDecoder::NextFrameError::ReadError);
+        }
     }
-
-    return std::unexpected(VideoDecoder::NextFrameError::ReadError);
 }
 
 void VideoDecoder::reset() {
     
 }
+
 
 VideoDecoder::VideoDecoder(
     AVContext ctx,        
