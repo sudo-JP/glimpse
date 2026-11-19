@@ -177,10 +177,17 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
     VulkanSyncPrimitives sync_primitives{std::move(present_complete_semaphores),
         std::move(render_finished_semaphores),
         std::move(in_flight_fences)};
+
+    auto video_decoder_res = VideoDecoder::new_video_decoder("sample.mp4");
+    if (!video_decoder_res) return std::unexpected(std::move(video_decoder_res).error());
+
+    auto video_decoder = std::move(video_decoder_res).value();
+
     return Renderer(
         std::move(core),
         std::move(sync_primitives),
         std::move(scene_data),
+        std::move(video_decoder),
         std::move(window)
     );
 }
@@ -317,6 +324,7 @@ Renderer::Renderer(
     RuntimeCore core,
     VulkanSyncPrimitives sync_primitives,
     SceneData scene_data,
+    VideoDecoder video_decoder,
     Window window
 )
     : m_vulkan_context(std::move(core.vulkan_context)),
@@ -332,5 +340,6 @@ Renderer::Renderer(
           std::move(sync_primitives.render_finished_semaphores)),
       m_in_flight_fences(std::move(sync_primitives.in_flight_fences)),
       m_entities(std::move(scene_data.entities)),
+      m_video_decoder(std::move(video_decoder)),
       m_window(std::move(window)) {}
 } // namespace glimpse::renderer

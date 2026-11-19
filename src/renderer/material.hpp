@@ -15,6 +15,7 @@ public:
     const vk::raii::DescriptorSetLayout& get_descriptor_set_layout() const;
     const Texture& get_texture() const;
     const GraphicsPipeline& get_pipeline() const;
+    void set_texture(std::shared_ptr<const Texture> texture);
 
 private:
     std::shared_ptr<const Texture> m_texture;

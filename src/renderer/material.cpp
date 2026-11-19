@@ -18,4 +18,8 @@ const Texture& Material::get_texture() const { return *m_texture.get(); }
 const GraphicsPipeline& Material::get_pipeline() const {
     return *m_pipeline.get();
 }
+
+void Material::set_texture(std::shared_ptr<const Texture> texture) {
+    m_texture = texture;
+}
 } // namespace glimpse::renderer

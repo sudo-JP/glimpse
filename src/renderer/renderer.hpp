@@ -8,6 +8,7 @@
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
 #include "renderer/camera.hpp"
+#include "renderer/video_decoder.hpp"
 #include "window/window.hpp"
 
 #include <cstdint>
@@ -48,6 +49,7 @@ private:
         RuntimeCore core,
         VulkanSyncPrimitives sync_primitives,
         SceneData scene_data,
+        VideoDecoder video_decoder,
         Window window
     );
 
@@ -77,5 +79,7 @@ private:
     static constexpr size_t m_max_frames_in_flight = 2;
 
     Camera m_camera{glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f)};
+    VideoDecoder m_video_decoder;
+    SceneData m_scene_data;
 };
 } // namespace glimpse::renderer

@@ -48,7 +48,7 @@ public:
     std::expected<VideoFrame, NextFrameError> next_frame();
 
     /// Reset stream of video to start
-    void reset();
+    std::expected<void, NextFrameError> reset();
 private:
     struct AVContext {
         std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx;

@@ -159,8 +159,14 @@ std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame
     }
 }
 
-void VideoDecoder::reset() {
+std::expected<void, VideoDecoder::NextFrameError> VideoDecoder::reset() {
+    int ret = av_seek_frame(m_format_ctx.get(), m_stream_idx, 0, AVSEEK_FLAG_BACKWARD);
+    if (ret < 0) return std::unexpected(VideoDecoder::NextFrameError::ReadError);
     
+    avcodec_flush_buffers(m_codec.get());
+
+    m_flushing = false;
+    return {};
 }
 
 
