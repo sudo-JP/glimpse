@@ -4,6 +4,7 @@
 #include "renderer/context.hpp"
 #include "renderer/entity.hpp"
 #include "renderer/graphics_pipeline.hpp"
+#include "renderer/scene_data.hpp"
 #include "renderer/swapchain.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
@@ -38,12 +39,6 @@ private:
         std::vector<vk::raii::Fence> in_flight_fences;
     };
 
-    struct SceneData {
-        std::shared_ptr<const GraphicsPipeline> pipeline;
-        std::unordered_map<std::string, std::shared_ptr<const Texture>> texture_map;
-        std::unordered_map<std::string, std::shared_ptr<const Material>> material_map;
-        std::vector<Entity<MVP>> entities;
-    };
 
     Renderer(
         RuntimeCore core,

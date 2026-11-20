@@ -17,7 +17,8 @@ namespace {
 } // namespace
 
 std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
-    const std::string& filename
+    const std::string& filename,
+    std::string texture_name
 ) {
     AVFormatContext *raw_ctx = nullptr; 
     if (avformat_open_input(&raw_ctx, filename.c_str(), nullptr, nullptr) < 0) {
@@ -95,6 +96,7 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
     return VideoDecoder(
         std::move(ctx),
         std::move(frame_decoder),
+        std::move(texture_name),
         video_stream_idx
     );
 }
@@ -169,10 +171,14 @@ std::expected<void, VideoDecoder::NextFrameError> VideoDecoder::reset() {
     return {};
 }
 
+const std::string VideoDecoder::get_texture_name() const {
+    return m_texture_name;
+}
 
 VideoDecoder::VideoDecoder(
     AVContext ctx,        
     FrameDecoder frame_decoder,
+    std::string texture_name,
     int stream_idx
 ) : m_format_ctx(std::move(ctx.format_ctx)),
 m_codec(std::move(ctx.codec)),

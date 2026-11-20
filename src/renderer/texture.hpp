@@ -31,5 +31,7 @@ private:
     vk::raii::DeviceMemory m_texture_image_memory = nullptr;
     vk::raii::ImageView m_texture_image_view = nullptr;
     vk::raii::Sampler m_texture_sampler = nullptr;
+
+    vk::raii::Buffer m_staging_buffer = nullptr;
 };
 } // namespace glimpse::renderer

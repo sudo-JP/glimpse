@@ -7,6 +7,7 @@
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
 #include "renderer/uniform.hpp"
+#include "renderer/video_decoder.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -178,7 +179,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         std::move(render_finished_semaphores),
         std::move(in_flight_fences)};
 
-    auto video_decoder_res = VideoDecoder::new_video_decoder("sample.mp4");
+    auto video_decoder_res = VideoDecoder::new_video_decoder("sample.mp4", "sample");
     if (!video_decoder_res) return std::unexpected(std::move(video_decoder_res).error());
 
     auto video_decoder = std::move(video_decoder_res).value();
@@ -263,6 +264,21 @@ std::expected<void, std::string> Renderer::draw_frame() {
         uniform.set_data(mvp);
         uniform.update(m_frame_index);
     }
+
+    auto video_frame_res = m_video_decoder.next_frame();
+    if (!video_frame_res && video_frame_res.error() == VideoDecoder::NextFrameError::EndOfFile
+    && m_video_decoder.reset()) {
+        video_frame_res = m_video_decoder.next_frame();
+    }
+    if (video_frame_res) {
+        auto video_frame = std::move(video_frame_res).value(); 
+        auto texture_name = m_video_decoder.get_texture_name();
+        if (m_texture_map.contains(texture_name)) {
+            auto& texture = m_texture_map[texture_name];
+            //texture
+        }
+    }
+
     auto err = m_command_recorder.record_command_buffer(
         image_idx,
         m_frame_index,

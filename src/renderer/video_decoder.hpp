@@ -42,13 +42,16 @@ public:
     };
 
     static std::expected<VideoDecoder, std::string> new_video_decoder(
-        const std::string& filename
+        const std::string& filename,
+        std::string texture_name
     );
 
     std::expected<VideoFrame, NextFrameError> next_frame();
 
     /// Reset stream of video to start
     std::expected<void, NextFrameError> reset();
+
+    const std::string get_texture_name() const;
 private:
     struct AVContext {
         std::unique_ptr<AVFormatContext, AVFormatContextDeleter> format_ctx;
@@ -65,6 +68,7 @@ private:
     VideoDecoder(
         AVContext ctx,        
         FrameDecoder frame_decoder,
+        std::string texture_name,
         int stream_idx
     );
 
@@ -79,5 +83,7 @@ private:
 
     bool m_flushing = false;
     int m_stream_idx;
+
+    std::string m_texture_name;
 };
 } // namespace glimpse::renderer
