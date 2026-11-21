@@ -2,6 +2,7 @@
 #include "renderer/command_recorder.hpp"
 #include "renderer/context.hpp"
 #include "renderer/utils.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <ktx.h>
 #include <utility>
@@ -134,21 +135,47 @@ std::expected<Texture, std::string> Texture::new_texture(
     return Texture(
         std::move(texture_image),
         std::move(texture_image_memory),
+        std::move(staging_buffer),
+        std::move(staging_buffer_memory),
         std::move(texture_image_view),
         std::move(texture_sampler)
     );
 }
 
+std::expected<void, std::string> Texture::update_texture_with_video_frame(
+    const CommandRecorder& recorder, const VideoFrame& frame
+) {
+    auto offset = vk::DeviceSize{0};
+    auto size = frame.pixels.size();
+    auto data_staging = static_cast<uint8_t *>(m_staging_buffer_memory.mapMemory(offset, size));
+    std::copy(frame.pixels.begin(), frame.pixels.end(), data_staging);
+
+    auto upload_res = recorder.upload_texture(
+        m_staging_buffer,
+        m_texture_image,
+        static_cast<uint32_t>(frame.width),
+        static_cast<uint32_t>(frame.height)
+    );
+    if (!upload_res)
+        return std::unexpected(std::move(upload_res).error());
+
+    return {};
+}
+
 Texture::Texture(
     vk::raii::Image texture_image,
     vk::raii::DeviceMemory texture_image_memory,
+    vk::raii::Buffer staging_buffer,
+    vk::raii::DeviceMemory staging_buffer_memory,
     vk::raii::ImageView texture_image_view,
     vk::raii::Sampler texture_sampler
 )
     : m_texture_image(std::move(texture_image)),
       m_texture_image_memory(std::move(texture_image_memory)),
       m_texture_image_view(std::move(texture_image_view)),
-      m_texture_sampler(std::move(texture_sampler)) {}
+      m_texture_sampler(std::move(texture_sampler)),
+      m_staging_buffer(std::move(staging_buffer)),
+      m_staging_buffer_memory(std::move(staging_buffer_memory)) {}
 
 const vk::raii::Sampler& Texture::get_texture_sampler() const {
     return m_texture_sampler;

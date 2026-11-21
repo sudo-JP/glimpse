@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/context.hpp"
+#include "renderer/types.hpp"
 #include <expected>
 #include <string>
 #include <vulkan/vulkan_raii.hpp>
@@ -19,10 +20,15 @@ public:
     const vk::raii::Sampler& get_texture_sampler() const;
     const vk::raii::ImageView& get_texture_image_view() const;
 
+    std::expected<void, std::string> update_texture_with_video_frame(
+        const CommandRecorder& recorder, const VideoFrame& frame
+    );
 private:
     Texture(
         vk::raii::Image texture_image,
         vk::raii::DeviceMemory texture_image_memory,
+        vk::raii::Buffer staging_buffer,
+        vk::raii::DeviceMemory staging_buffer_memory,
         vk::raii::ImageView texture_image_view,
         vk::raii::Sampler texture_sampler
     );
@@ -33,5 +39,6 @@ private:
     vk::raii::Sampler m_texture_sampler = nullptr;
 
     vk::raii::Buffer m_staging_buffer = nullptr;
+    vk::raii::DeviceMemory m_staging_buffer_memory = nullptr;
 };
 } // namespace glimpse::renderer
