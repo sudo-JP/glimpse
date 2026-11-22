@@ -6,7 +6,7 @@
 namespace glimpse::renderer {
 struct SceneData {
     std::shared_ptr<const GraphicsPipeline> pipeline;
-    std::unordered_map<std::string, std::shared_ptr<const Texture>> texture_map;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> texture_map;
     std::unordered_map<std::string, std::shared_ptr<const Material>> material_map;
     std::vector<Entity<MVP>> entities;
 };

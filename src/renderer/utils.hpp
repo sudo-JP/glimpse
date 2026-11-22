@@ -15,6 +15,13 @@ create_buffer(
 );
 
 template <typename T>
+void copy_buffer(
+    const std::vector<T>& data, 
+    vk::raii::DeviceMemory& buffer_memory, 
+    const vk::DeviceSize size
+);
+
+template <typename T>
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_staging_buffer(
     const VulkanContext& context,

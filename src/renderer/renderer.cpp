@@ -124,7 +124,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         *context
     );
     if (!texture_res) return std::unexpected(std::move(texture_res).error());
-    auto texture = std::make_shared<const Texture>(std::move(texture_res).value());
+    auto texture = std::make_shared<Texture>(std::move(texture_res).value());
 
     // Pyramid vertices
     const auto [vertices, indices] = std::move(create_vertices());
@@ -149,7 +149,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         texture,
         pipeline
     );
-    std::unordered_map<std::string, std::shared_ptr<const Texture>> texture_map;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> texture_map;
     texture_map.emplace("swirl", texture);
 
     std::unordered_map<std::string, std::shared_ptr<const Material>> material_map;
@@ -265,18 +265,27 @@ std::expected<void, std::string> Renderer::draw_frame() {
         uniform.update(m_frame_index);
     }
 
-    auto video_frame_res = m_video_decoder.next_frame();
-    if (!video_frame_res && video_frame_res.error() == VideoDecoder::NextFrameError::EndOfFile
-    && m_video_decoder.reset()) {
-        video_frame_res = m_video_decoder.next_frame();
-    }
-    if (video_frame_res) {
-        auto video_frame = std::move(video_frame_res).value(); 
-        auto texture_name = m_video_decoder.get_texture_name();
-        if (m_texture_map.contains(texture_name)) {
-            auto& texture = m_texture_map[texture_name];
-            //texture
+    auto get_frame = [&]() -> std::optional<VideoFrame> {
+        auto res = m_video_decoder.next_frame();
+        if (!res) {
+            if (res.error() == VideoDecoder::NextFrameError::EndOfFile) {
+                // uhh the error will be used later when i make smth more proper
+                auto e = m_video_decoder.reset(); 
+                auto retry = m_video_decoder.next_frame();
+                if (retry) return std::move(retry).value();
+            }
+            return std::nullopt;
         }
+        return std::move(res).value();
+    };
+
+    auto frame_res = get_frame();
+    if (frame_res) {
+        auto frame = std::move(frame_res).value();
+        auto texture_name = m_video_decoder.get_texture_name();  
+        auto& texture = m_texture_map[texture_name];
+        auto update_text_res = texture->update_texture_with_video_frame(m_command_recorder, frame);
+        if (!update_text_res) return std::unexpected(std::move(update_text_res).error());
     }
 
     auto err = m_command_recorder.record_command_buffer(

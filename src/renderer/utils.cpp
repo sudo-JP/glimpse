@@ -61,6 +61,18 @@ create_buffer(
 }
 
 template <typename T>
+void copy_buffer(
+    const std::vector<T>& data, 
+    vk::raii::DeviceMemory& buffer_memory, 
+    const vk::DeviceSize size
+) {
+    auto offset = vk::DeviceSize{0};
+    auto data_staging = static_cast<T *>(buffer_memory.mapMemory(offset, size));
+    std::copy(data.begin(), data.end(), data_staging);
+    buffer_memory.unmapMemory();
+}
+
+template <typename T>
 std::expected<std::pair<vk::raii::Buffer, vk::raii::DeviceMemory>, std::string>
 create_staging_buffer(
     const VulkanContext& context,
@@ -78,10 +90,7 @@ create_staging_buffer(
         return std::unexpected(std::move(staging_buffer_res).error());
     auto [staging_buffer, staging_buffer_memory] = std::move(staging_buffer_res).value();
 
-    auto offset = vk::DeviceSize{0};
-    auto data_staging = static_cast<T *>(staging_buffer_memory.mapMemory(offset, size));
-    std::copy(data.begin(), data.end(), data_staging);
-    staging_buffer_memory.unmapMemory();
+    copy_buffer(data, staging_buffer_memory, size);
 
     return std::pair{std::move(staging_buffer),
         std::move(staging_buffer_memory)};

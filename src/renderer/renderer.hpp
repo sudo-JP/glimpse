@@ -56,7 +56,7 @@ private:
     VulkanSwapchain m_swapchain;
     CommandRecorder m_command_recorder;
     std::shared_ptr<const GraphicsPipeline> m_pipeline;
-    std::unordered_map<std::string, std::shared_ptr<const Texture>> m_texture_map;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> m_texture_map;
     std::unordered_map<std::string, std::shared_ptr<const Material>> m_material_map;
 
     // Window

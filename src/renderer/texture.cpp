@@ -145,10 +145,8 @@ std::expected<Texture, std::string> Texture::new_texture(
 std::expected<void, std::string> Texture::update_texture_with_video_frame(
     const CommandRecorder& recorder, const VideoFrame& frame
 ) {
-    auto offset = vk::DeviceSize{0};
-    auto size = frame.pixels.size();
-    auto data_staging = static_cast<uint8_t *>(m_staging_buffer_memory.mapMemory(offset, size));
-    std::copy(frame.pixels.begin(), frame.pixels.end(), data_staging);
+    vk::DeviceSize buffer_size = sizeof(uint8_t) * frame.pixels.size();
+    copy_buffer(frame.pixels, m_staging_buffer_memory, buffer_size);
 
     auto upload_res = recorder.upload_texture(
         m_staging_buffer,
