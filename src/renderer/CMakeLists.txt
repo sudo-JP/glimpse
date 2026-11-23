@@ -14,5 +14,4 @@ target_sources(${PROJECT_NAME} PRIVATE
     material.cpp
     camera.cpp
     video_decoder.cpp
-    scene_data.cpp
 )

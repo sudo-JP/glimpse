@@ -14,6 +14,8 @@ extern "C" {
 
 namespace glimpse::renderer {
 namespace {
+constexpr int texture_width = 3840;
+constexpr int texture_height = 2160;
 } // namespace
 
 std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
@@ -62,7 +64,7 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
     
     SwsContext *raw_sws_ctx = sws_getContext(
         width, height, codec_ctx->pix_fmt,
-        width, height, AV_PIX_FMT_RGB24,
+        texture_width, texture_height, AV_PIX_FMT_RGBA,
         SWS_BILINEAR, nullptr, nullptr, nullptr
     );
     if (!raw_sws_ctx) return std::unexpected("could not create sws context");
@@ -102,16 +104,16 @@ std::expected<VideoDecoder, std::string> VideoDecoder::new_video_decoder(
 }
 
 std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame() {
-    const int width = m_codec->width;
-    const int height = m_codec->height;
+    constexpr int width = texture_width;
+    constexpr int height = texture_height;
 
     VideoFrame frame;
     frame.width = width;
     frame.height = height;
-    frame.pixels.resize(width * height * 3);
+    frame.pixels.resize(width * height * 4);
 
     uint8_t* dest_data[4] = { frame.pixels.data(), nullptr, nullptr, nullptr };
-    int dest_linesize[4] = { width * 3, 0, 0, 0 };
+    int dest_linesize[4] = { width * 4, 0, 0, 0 };
 
     while (true) {
         int ret = avcodec_receive_frame(m_codec.get(), m_av_frame.get());
@@ -121,7 +123,7 @@ std::expected<VideoFrame, VideoDecoder::NextFrameError> VideoDecoder::next_frame
                 m_av_frame->data,
                 m_av_frame->linesize,
                 0,
-                height,
+                m_codec->height,
                 dest_data,
                 dest_linesize
             );
@@ -186,6 +188,7 @@ m_sws_ctx(std::move(ctx.sws_ctx)),
 m_av_frame(std::move(frame_decoder.av_frame)),
 m_rgb_frame(std::move(frame_decoder.rgb_frame)),
 m_packet(std::move(frame_decoder.packet)),
-m_stream_idx(stream_idx) 
+m_stream_idx(stream_idx),
+m_texture_name(std::move(texture_name))
 {}
 } // namespace glimpse::renderer

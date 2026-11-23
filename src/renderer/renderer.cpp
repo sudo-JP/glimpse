@@ -164,6 +164,10 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
     std::vector<Entity<MVP>> entities;
     entities.push_back(std::move(entity));
 
+    VulkanSyncPrimitives sync_primitives{std::move(present_complete_semaphores),
+        std::move(render_finished_semaphores),
+        std::move(in_flight_fences)};
+
     SceneData scene_data{
         .pipeline = pipeline,
         .texture_map = std::move(texture_map),
@@ -171,18 +175,18 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         .entities = std::move(entities)
     };
 
+    auto video_decoder_res = VideoDecoder::new_video_decoder(
+        std::string(SHADER_DIR) + "/bad_apple.mp4",
+        "swirl"
+    );
+
+    if (!video_decoder_res) return std::unexpected(std::move(video_decoder_res).error());
+
+    auto video_decoder = std::move(video_decoder_res).value();
     RuntimeCore core{std::move(context),
         std::move(descriptor_allocator),
         std::move(swapchain),
         std::move(command_recorder)};
-    VulkanSyncPrimitives sync_primitives{std::move(present_complete_semaphores),
-        std::move(render_finished_semaphores),
-        std::move(in_flight_fences)};
-
-    auto video_decoder_res = VideoDecoder::new_video_decoder("sample.mp4", "sample");
-    if (!video_decoder_res) return std::unexpected(std::move(video_decoder_res).error());
-
-    auto video_decoder = std::move(video_decoder_res).value();
 
     return Renderer(
         std::move(core),
