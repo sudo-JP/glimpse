@@ -13,5 +13,4 @@ target_sources(${PROJECT_NAME} PRIVATE
     descriptor_allocator.cpp
     material.cpp
     camera.cpp
-    video_decoder.cpp
 )
