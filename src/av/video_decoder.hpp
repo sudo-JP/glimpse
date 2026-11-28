@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer/types.hpp"
+#include "av/types.hpp"
 #include <expected>
 #include <memory>
 #include <string>
@@ -10,8 +10,7 @@ extern "C" {
     #include <libswscale/swscale.h>
 }
 
-namespace glimpse::renderer {
-
+namespace glimpse::av {
 struct AVFormatContextDeleter {
     void operator()(AVFormatContext* ctx) const { if (ctx) avformat_close_input(&ctx); }
 };
@@ -86,4 +85,4 @@ private:
 
     std::string m_texture_name;
 };
-} // namespace glimpse::renderer
+} // namespace glimpse::av

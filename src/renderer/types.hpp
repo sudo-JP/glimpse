@@ -1,9 +1,7 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
 #include <array>
-#include <cstdint>
 #include <glm/glm.hpp>
-#include <vector>
 
 namespace glimpse::renderer {
 struct VulkanVertex {
@@ -22,10 +20,4 @@ struct MVP {
     glm::mat4x4 proj;
 };
 
-struct VideoFrame {
-    int width; 
-    int height;
-    int linesize;
-    std::vector<uint8_t> pixels;
-};
 } // namespace glimpse::renderer

@@ -7,7 +7,7 @@
 #include "renderer/texture.hpp"
 #include "renderer/types.hpp"
 #include "renderer/uniform.hpp"
-#include "renderer/video_decoder.hpp"
+#include "av/video_decoder.hpp"
 #include "window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -175,7 +175,7 @@ std::expected<Renderer, std::string> Renderer::new_renderer() {
         .entities = std::move(entities)
     };
 
-    auto video_decoder_res = VideoDecoder::new_video_decoder(
+    auto video_decoder_res = av::VideoDecoder::new_video_decoder(
         std::string(SHADER_DIR) + "/bad_apple.mp4",
         "swirl"
     );
@@ -269,10 +269,10 @@ std::expected<void, std::string> Renderer::draw_frame() {
         uniform.update(m_frame_index);
     }
 
-    auto get_frame = [&]() -> std::optional<VideoFrame> {
+    auto get_frame = [&]() -> std::optional<av::VideoFrame> {
         auto res = m_video_decoder.next_frame();
         if (!res) {
-            if (res.error() == VideoDecoder::NextFrameError::EndOfFile) {
+            if (res.error() == av::VideoDecoder::NextFrameError::EndOfFile) {
                 // uhh the error will be used later when i make smth more proper
                 auto e = m_video_decoder.reset(); 
                 auto retry = m_video_decoder.next_frame();
@@ -353,7 +353,7 @@ Renderer::Renderer(
     RuntimeCore core,
     VulkanSyncPrimitives sync_primitives,
     SceneData scene_data,
-    VideoDecoder video_decoder,
+    av::VideoDecoder video_decoder,
     Window window
 )
     : m_vulkan_context(std::move(core.vulkan_context)),

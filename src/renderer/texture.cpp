@@ -143,7 +143,7 @@ std::expected<Texture, std::string> Texture::new_texture(
 }
 
 std::expected<void, std::string> Texture::update_texture_with_video_frame(
-    const CommandRecorder& recorder, const VideoFrame& frame
+    const CommandRecorder& recorder, const av::VideoFrame& frame
 ) {
     vk::DeviceSize buffer_size = sizeof(uint8_t) * frame.pixels.size();
     copy_buffer(frame.pixels, m_staging_buffer_memory, buffer_size);

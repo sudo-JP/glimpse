@@ -1,5 +1,6 @@
 #pragma once
 
+#include "av/types.hpp"
 #include "renderer/context.hpp"
 #include "renderer/types.hpp"
 #include <expected>
@@ -21,7 +22,7 @@ public:
     const vk::raii::ImageView& get_texture_image_view() const;
 
     std::expected<void, std::string> update_texture_with_video_frame(
-        const CommandRecorder& recorder, const VideoFrame& frame
+        const CommandRecorder& recorder, const av::VideoFrame& frame
     );
 private:
     Texture(

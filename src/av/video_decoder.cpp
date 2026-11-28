@@ -12,7 +12,7 @@ extern "C" {
 }
 #include <memory>
 
-namespace glimpse::renderer {
+namespace glimpse::av {
 namespace {
 constexpr int texture_width = 3840;
 constexpr int texture_height = 2160;
@@ -191,4 +191,4 @@ m_packet(std::move(frame_decoder.packet)),
 m_stream_idx(stream_idx),
 m_texture_name(std::move(texture_name))
 {}
-} // namespace glimpse::renderer
+} // namespace glimpse::av
